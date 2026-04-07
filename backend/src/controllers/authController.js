@@ -1,0 +1,186 @@
+import asyncHandler from "express-async-handler";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import bcrypt from "bcrypt";
+import User from "../models/User.js";
+import Session from "../models/Session.js";
+
+const ACCESS_TOKEN_TTL = "15m";
+const REFRESH_TOKEN_SORT_TTL = 24 * 60 * 60 * 1000; // 1 days
+const REFRESH_TOKEN_LONG_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+export const signUp = asyncHandler(async (req, res) => {
+  const { email, password, confirmPassword,username } = req.body;
+
+  if (!email || !password || !confirmPassword || !username) {
+    res.status(400);
+    throw new Error("All fields are required");
+  }
+
+  if (password !== confirmPassword) {
+    res.status(400);
+    throw new Error("Passwords do not match");
+  }
+
+  const userExist = await User.findOne({ email });
+  if (userExist) {
+    res.status(409);
+    throw new Error("User already exists");
+  }
+
+  const user = await User.create({ email, password,username });
+  await user.save();
+
+
+  res.status(201).json({
+    message: "Account created",
+  });
+});
+
+
+export const signIn = asyncHandler(async (req, res) => {
+  const { email, password, rememberMe } = req.body;
+  console.log(req.body);
+  if (!email || !password) {
+    res.status(400);
+    throw new Error("Missing email or password");
+  }
+
+  const user = await User.findOne({ email });
+  if (!user || !user.password) {
+    res.status(401);
+    throw new Error("email or password not correct");
+  }
+
+  const passwordCorrect = await bcrypt.compare(password, user.password);
+  if (!passwordCorrect) {
+    res.status(401);
+    throw new Error("email or password not correct");
+  }
+
+  const REFRESH_TOKEN_TTL = rememberMe
+    ? REFRESH_TOKEN_LONG_TTL // 30 days
+    : REFRESH_TOKEN_SORT_TTL; // 1 day
+  console.log(REFRESH_TOKEN_TTL);
+
+  const accessToken = jwt.sign(
+    { userId: user._id },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: REFRESH_TOKEN_TTL },
+  );
+
+  const refreshToken = crypto.randomBytes(64).toString("hex");
+
+  await Session.create({
+    userId: user._id,
+    refreshToken,
+    expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL),
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: REFRESH_TOKEN_TTL,
+  });
+
+  res.status(200).json({
+    _id: user._id,
+    email: user.email,
+    message: `User ${user.email} login success`,
+    accessToken,
+  });
+});
+
+export const adminLogin = asyncHandler(async (req, res) => {
+  const { email, password, rememberMe } = req.body;
+
+  if (!email || !password) {
+    res.status(400);
+    throw new Error("Missing email or password");
+  }
+
+  const user = await User.findOne({ email });
+  if (!user || user.isAdmin !== true) {
+    res.status(403);
+    throw new Error("Not authorised");
+  }
+
+  const passwordCorrect = await bcrypt.compare(password, user.password);
+  if (!passwordCorrect) {
+    res.status(401);
+    throw new Error("Email or password not correct");
+  }
+
+  const REFRESH_TOKEN_TTL = rememberMe
+    ? REFRESH_TOKEN_LONG_TTL // 30 days
+    : REFRESH_TOKEN_SORT_TTL; // 1 day
+
+  const accessToken = jwt.sign(
+    { userId: user._id },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: ACCESS_TOKEN_TTL },
+  );
+
+  const refreshToken = crypto.randomBytes(64).toString("hex");
+
+  await Session.create({
+    userId: user._id,
+    refreshToken,
+    expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL),
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: REFRESH_TOKEN_TTL,
+  });
+
+  res.status(200).json({
+    _id: user._id,
+    email: user.email,
+    message: `Admin ${user.username} login success`,
+    accessToken,
+  });
+});
+
+export const refreshToken = async (req, res) => {
+  const token = req.cookies.refreshToken;
+
+  if (!token) {
+    return res.status(401).json({ message: "No refresh token" });
+  }
+  const session = await Session.findOne({ refreshToken: token });
+  if (!session) {
+    return res.status(403).json({ message: "Invalid token or expired" });
+  }
+
+  if (session.expiresAt < new Date()) {
+    return res.status(403).json({ message: "Token expired" });
+  }
+
+  const accessToken = jwt.sign(
+    {
+      userId: session.userId,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: ACCESS_TOKEN_TTL },
+  );
+
+  res.json({ accessToken: accessToken });
+};
+
+export const signOut = asyncHandler(async (req, res) => {
+  const token = req.cookies?.refreshToken;
+  if (token) {
+    await Session.deleteOne({ refreshToken: token });
+    res.clearCookie("refreshToken");
+  }
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+  });
+  res.sendStatus(204);
+});
