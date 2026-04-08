@@ -1,0 +1,25 @@
+import express from 'express'
+import { getUsers,getUserById, updateUser, deleteUser, getWishlist, userCart, getUserCart, emptyCart, createOrder, getAllOrders, getOrderbyUser, authMe, addToWishlist, removeFromWishlist } from '../controllers/userController.js';
+import {protectedRoute, isAdmin} from '../middlewares/authMiddleware.js';
+
+
+const router = express.Router();
+router.get('/',protectedRoute,isAdmin,getUsers);
+router.get('/me',protectedRoute, authMe);
+router.put('/update/:id',protectedRoute, updateUser);
+router.delete('/:id',protectedRoute, isAdmin, deleteUser);
+router.post('/add-wishlist', protectedRoute, addToWishlist);
+router.put('/remove-wishlist', protectedRoute,removeFromWishlist)
+router.get('/wishlist',protectedRoute, getWishlist);
+router.post('/cart',protectedRoute, userCart);
+router.post('/get-cart',protectedRoute, getUserCart);
+router.post('/empty-cart',protectedRoute, emptyCart);
+router.post('/create-order',protectedRoute, createOrder );
+router.post('/get-order',protectedRoute, getOrderbyUser)
+router.get('/get-all-orders',protectedRoute,isAdmin, getAllOrders)
+
+router.get('/:id',protectedRoute, getUserById);
+
+
+
+export default router;
