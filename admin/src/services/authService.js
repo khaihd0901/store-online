@@ -1,12 +1,6 @@
-import api from '../middlewares/axios';
-
-
-const authSignUp = async (data) => {
-  const res = await api.post(`auth/signup`, data);
-  return res.data
-};
+import api from '../utils/api';
 const authLogin = async (data) => {
-  const res = await api.post(`auth/signin`, data);
+  const res = await api.post(`auth/admin-login`, data);
   return res.data;
 };
 
@@ -21,10 +15,7 @@ const authRefreshToken = async () =>{
   const res = await api.post(`auth/refresh-token`)
   return res.data.accessToken
 }
-
-
 const authService = {
-  authSignUp,
   authLogin,
   authSignOut,
   authMe,
