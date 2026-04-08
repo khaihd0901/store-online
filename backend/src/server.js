@@ -3,9 +3,9 @@ import dotenv from 'dotenv';
 import cookies from 'cookie-parser'
 import {connectDB} from './libs/db.js';
 import authRoute from './routes/authRoute.js'
-// import userRoute from './routes/userRoute.js'
-// import productRoute from './routes/productRoute.js'
-// import categoryRoute from './routes/categoryRoute.js'
+import userRoute from './routes/userRoute.js'
+import productRoute from './routes/productRoute.js'
+import categoryRoute from './routes/categoryRoute.js'
 // import brandRoute from './routes/brandRoute.js'
 // import couponRoute from './routes/couponRoute.js'
 import cookieParser from 'cookie-parser';
@@ -36,10 +36,9 @@ app.use(errorHandler);
 
 
 app.use('/api/auth', authRoute)
-// app.use('/api/user', userRoute)
-// app.use('/api/brand', brandRoute)
-// app.use('/api/category', categoryRoute)
-// app.use('/api/product', productRoute)
+app.use('/api/user', userRoute)
+app.use('/api/category', categoryRoute)
+app.use('/api/product', productRoute)
 // app.use('/api/coupon', couponRoute)
 
 connectDB().then(()=>{
