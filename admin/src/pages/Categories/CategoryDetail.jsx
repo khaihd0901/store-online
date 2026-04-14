@@ -12,7 +12,7 @@ export default function CategoryDetail({ categoryId, onClose }) {
   useEffect(() => {
     categoryGetById(categoryId);
   }, [categoryId]);
-
+console.log(category)
   let validationSchema = Yup.object({
     categoryName: Yup.string().required("Name is required"),
   });
@@ -65,6 +65,19 @@ export default function CategoryDetail({ categoryId, onClose }) {
                       </div>
                     )}
                   </div>
+                        <div className="space-y-3">
+        {category?.books?.map((book) => (
+          <div
+            key={book._id}
+            className="p-3 border rounded-lg shadow-sm"
+          >
+            <p className="font-semibold">{book.title}</p>
+            <p className="text-gray-500 text-sm">
+              {book.author}
+            </p>
+          </div>
+        ))}
+      </div>
                 </div>
               </div>
             </div>
@@ -97,7 +110,7 @@ export default function CategoryDetail({ categoryId, onClose }) {
           <div className="flex flex-col items-center gap-3">
             <div className="w-12 h-12 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
             <p className="text-sm text-gray-600 font-medium">
-              Creating brand...
+              Creating book...
             </p>
           </div>
         </div>

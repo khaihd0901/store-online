@@ -27,7 +27,8 @@ export const getCategories = asyncHandler(async (req, res) => {
 
 // Read a single category
 export const getCategoryById = asyncHandler(async (req, res) => {
-  const category = await Category.findById(req.params.id);
+  const category = await Category.findById(req.params.id)
+    .populate("books", "title author");
 
   if (!category) {
     res.status(404);

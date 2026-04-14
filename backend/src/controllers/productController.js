@@ -26,7 +26,7 @@ export const createProduct = asyncHandler(async (req, res) => {
 
     await Category.findByIdAndUpdate(
       category,
-      { $addToSet: { products: product[0]._id } }, // no duplicates
+      { $addToSet: { books: product[0]._id } }, // no duplicates
       { session }
     );
     await session.commitTransaction();
