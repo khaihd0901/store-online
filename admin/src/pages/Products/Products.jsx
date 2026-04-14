@@ -35,11 +35,10 @@ export default function Product() {
     key: index + 1,
     id: item._id,
     name: item.title,
+    author: item.author,
     category: item.category?.categoryName || "-",
-    brand: item.brand?.name || "-",
     stock: item.stock,
     price: item.price,
-    ratingsQuantity: item.ratingsQuantity,
   }));
 
   const handleView =  (e) => {
