@@ -18,7 +18,7 @@ const UserSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    fullName:{
+    fullName: {
       type: String,
     },
     password: {
@@ -28,7 +28,6 @@ const UserSchema = mongoose.Schema(
     phone: {
       type: Number,
       trim: true,
-      unique: true,
     },
     address: {
       type: String,
@@ -50,6 +49,16 @@ const UserSchema = mongoose.Schema(
         ref: "Product",
       },
     ],
+    isLocked: {
+      type: Boolean,
+      default: false,
+    },
+    lockReason: {
+      type: String,
+    },
+    lockedAt: {
+      type: Date,
+    },
     isVerified: {
       type: Boolean,
       default: false,
@@ -70,10 +79,10 @@ const UserSchema = mongoose.Schema(
   },
 );
 // Hash password
-UserSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+UserSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
+
   this.password = await bcrypt.hash(this.password, 10);
-  next();
 });
 // UserSchema.methods.createPasswordResetToken = function () {
 //   const resetToken = crypto.randomBytes(32).toString("hex");
