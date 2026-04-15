@@ -1,11 +1,33 @@
+import { useAuthStore } from '@/stores/authStore';
 import React, { useState } from 'react';
 import { Link } from 'react-router'; 
+import * as Yup from "yup";
+import { useFormik } from "formik";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('signin');
 
+  const { authLogin } = useAuthStore();
+    let validationSchema = Yup.object({
+      email: Yup.string()
+        .email("Invalid email address")
+        .required("Email is required"),
+      password: Yup.string().required("Password is required"),
+    });
+    const formik = useFormik({
+      initialValues: {
+        email: "",
+        password: "",
+        rememberMe: false,
+      },
+      validationSchema: validationSchema,
+      onSubmit: async (email, password) => {
+        await authLogin(email, password);
+        window.location.reload();
+      },
+    });
   return (
     <>
       <header id="header" className="site-header sticky top-0 z-40 bg-white">
@@ -130,14 +152,30 @@ const Header = () => {
               </nav>
 
               {activeTab === 'signin' && (
-                <div className="animate-fade-in">
+                <form className="animate-fade-in" onSubmit={formik.handleSubmit}>
                   <div className="mb-5">
                     <label className="block mb-2 text-sm font-medium text-gray-700">Username or email address *</label>
-                    <input type="text" placeholder="Enter your email" className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all" />
+                    <input 
+                      type="text" 
+                      placeholder="Enter your email" 
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all" 
+                      {...formik.getFieldProps('email')}
+                    />
+                    {formik.touched.email && formik.errors.email ? (
+                      <div className="text-red-500 text-sm">{formik.errors.email}</div>
+                    ) : null}
                   </div>
                   <div className="mb-5">
                     <label className="block mb-2 text-sm font-medium text-gray-700">Password *</label>
-                    <input type="password" placeholder="Enter your password" className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all" />
+                    <input 
+                      type="password" 
+                      placeholder="Enter your password" 
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all" 
+                      {...formik.getFieldProps('password')}
+                    />
+                    {formik.touched.password && formik.errors.password ? (
+                      <div className="text-red-500 text-sm">{formik.errors.password}</div>
+                    ) : null}
                   </div>
                   <div className="flex items-center justify-between mb-6">
                     <label className="flex items-center cursor-pointer">
@@ -146,14 +184,17 @@ const Header = () => {
                     </label>
                     <a href="#" className="text-sm font-semibold text-red-500 hover:text-red-600">Forgot Password?</a>
                   </div>
-                  <button className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-semibold hover:bg-red-500 transition-colors shadow-md hover:shadow-lg">
+                  <button 
+                    type="submit" 
+                    className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-semibold hover:bg-red-500 transition-colors shadow-md hover:shadow-lg"
+                  >
                     Login
                   </button>
-                </div>
+                </form>
               )}
 
               {activeTab === 'register' && (
-                <div className="animate-fade-in">
+                <form className="animate-fade-in">
                   <div className="mb-5">
                     <label className="block mb-2 text-sm font-medium text-gray-700">Your email address *</label>
                     <input type="email" placeholder="Enter your email" className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all" />
@@ -173,7 +214,7 @@ const Header = () => {
                   <button className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-semibold hover:bg-red-500 transition-colors shadow-md hover:shadow-lg">
                     Register
                   </button>
-                </div>
+                </form>
               )}
             </div>
           </div>

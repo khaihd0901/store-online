@@ -97,11 +97,11 @@ export const useAuthStore = create(
       },
     }),
     {
-      name: "auth-storage", // key in localStorage
+      name: "auth-storage", 
       partialize: (state) => ({
-        accessToken: state.accessToken,
+        // accessToken: state.accessToken,
         user: state.user,
-      }), // only persist these
+      }),
     }
   )
 );

@@ -1,0 +1,61 @@
+import asyncHandler from "express-async-handler";
+import Coupon from "../models/Coupon.js";
+
+// Create a new coupon
+export const createCoupon = asyncHandler(async (req, res) => {
+  const { code, ...values } = req.body;
+  if (!code) {
+    res.status(400);
+    throw new Error("Coupon name is required");
+  }
+  const coupon = await Coupon.create({ code,...values });
+  res.status(201).json(coupon);
+});
+
+// Get all coupons
+export const getAllCoupons = asyncHandler(async (req, res) => {
+  const coupons = await Coupon.find();
+  res.status(200).json(coupons);
+});
+
+// Get single coupon by ID
+export const getCouponById = asyncHandler(async (req, res) => {
+  const coupon = await Coupon.findById(req.params.id);
+
+  if (!coupon) {
+    res.status(404);
+    throw new Error("Coupon not found");
+  }
+
+  res.status(200).json(coupon);
+});
+
+// Update coupon
+export const updateCoupon = asyncHandler(async (req, res) => {
+  const coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!coupon) {
+    res.status(404);
+    throw new Error("Coupon not found");
+  }
+
+  res.status(200).json(coupon);
+});
+
+// Delete coupon
+export const deleteCoupon = asyncHandler(async (req, res) => {
+  const coupon = await Coupon.findByIdAndDelete(req.params.id);
+
+  if (!coupon) {
+    res.status(404);
+    throw new Error("Coupon not found");
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Coupon deleted successfully",
+  });
+});

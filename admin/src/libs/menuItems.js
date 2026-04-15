@@ -5,10 +5,10 @@ const menuItems = [
     id: "catalog",
     icon: Database,
     label: "Catalog",
-    submenu: [
-      { id: "products", label: "Product List" },   
+     submenu: [
+      { id: "products", label: "Product List" },
+      { id: "coupons", label: "Coupon List" },
       { id: "categories", label: "Category List" },
-      // { id: "colors", label: "Color List" },
     ],
   },
   {

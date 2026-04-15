@@ -2,7 +2,9 @@ import asyncHandler from "express-async-handler";
 import User from "../models/User.js";
 import Product from "../models/Product.js";
 import Session from "../models/Session.js";
+import { sendResetPasswordOTP } from "../utils/emailHandler.js";
 import Cart from "../models/Cart.js";
+import Coupon from "../models/Coupon.js";
 import Order from "../models/Order.js";
 import crypto from "crypto";
 import mongoose from "mongoose";
@@ -17,13 +19,10 @@ export const getUsers = asyncHandler(async (req, res) => {
 });
 
 export const authMe = asyncHandler(async (req, res) => {
-  const user = req.user;
-
   res.status(200).json({
-    _id: user._id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
+    userId: req.user._id,
+    email: req.user.email,
+    firstName: req.user.firstName,
   });
 });
 // ============================
@@ -51,7 +50,7 @@ export const updateUser = asyncHandler(async (req, res) => {
     lastName,
     phone,
     address,
-    fullName: `${firstName} ${lastName}`
+    fullName: `${firstName} ${lastName}`,
   };
 
   const user = await User.findByIdAndUpdate(
@@ -132,6 +131,7 @@ export const forgotPasswordOTP = asyncHandler(async (req, res) => {
 
   const OTP = await user.createOTP();
   await user.save();
+  await sendResetPasswordOTP(email, OTP);
 
   res.status(200).json({ message: "Email sent successfully" });
 });
@@ -333,12 +333,84 @@ export const emptyCart = asyncHandler(async (req, res) => {
   });
 });
 
+// ============================
+// APPLY COUPON
+// ============================
+export const applyCoupon = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  const { coupon } = req.body;
+
+  if (!coupon) {
+    res.status(400);
+    throw new Error("Coupon code is required");
+  }
+
+  const couponCode = coupon.trim().toUpperCase();
+
+  const validCoupon = await Coupon.findOne({ code: couponCode });
+
+  // ❌ Validate coupon
+  if (!validCoupon) {
+    res.status(404);
+    throw new Error("Coupon not found");
+  }
+
+  if (!validCoupon.isActive) {
+    res.status(400);
+    throw new Error("Coupon is inactive");
+  }
+
+  if (validCoupon.expiryDate < new Date()) {
+    res.status(400);
+    throw new Error("Coupon expired");
+  }
+
+  if (
+    validCoupon.maxUses &&
+    validCoupon.currentUses >= validCoupon.maxUses
+  ) {
+    res.status(400);
+    throw new Error("Coupon usage limit reached");
+  }
+
+  const cart = await Cart.findOne({ orderBy: _id });
+  if (!cart) {
+    res.status(404);
+    throw new Error("Cart not found");
+  }
+  if (cart.cartTotal < validCoupon.minPurchaseAmount) {
+    res.status(400);
+    throw new Error(
+      `Minimum purchase amount is ${validCoupon.minPurchaseAmount}`
+    );
+  }
+  let discount = 0;
+
+  if (validCoupon.discountType === "percentage") {
+    discount = (cart.cartTotal * validCoupon.discountValue) / 100;
+  } else {
+    discount = validCoupon.discountValue;
+  }
+
+  const totalAfterDiscount = Math.max(0, cart.cartTotal - discount);
+
+  cart.totalAfterDiscount = totalAfterDiscount;
+  cart.appliedCoupon = couponCode; // 🔥 IMPORTANT
+  await cart.save();
+
+  res.status(200).json({
+    success: true,
+    coupon: couponCode,
+    discount,
+    totalAfterDiscount,
+  });
+});
 
 // ============================
 // CREATE ORDER
 // ============================
 export const createOrder = asyncHandler(async (req, res) => {
-  const { COD } = req.body;
+  const { COD, couponApplied } = req.body;
   const { _id } = req.user;
 
   if (!COD) {
@@ -352,12 +424,17 @@ export const createOrder = asyncHandler(async (req, res) => {
     throw new Error("Cart not found");
   }
 
+  const finalAmount =
+    couponApplied && userCart.totalAfterDiscount
+      ? userCart.totalAfterDiscount
+      : userCart.cartTotal;
+
   await Order.create({
     orderBy: _id,
     items: userCart.items,
-    totalAmount: userCart.cartTotal,
+    totalAmount: finalAmount,
     paymentIntent: {
-      amount: userCart.cartTotal,
+      amount: finalAmount,
       status: "processing",
       method: "cod",
     },
