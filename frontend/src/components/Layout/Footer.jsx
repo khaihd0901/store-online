@@ -1,9 +1,85 @@
-import React from 'react'
+import React from 'react';
+import { Link } from 'react-router';
 
 const Footer = () => {
   return (
-    <div>Footer</div>
-  )
-}
+    <footer className="pt-20 pb-10 border-t border-gray-100 bg-white">
+      <div className="container mx-auto px-4 md:px-10">
+        <div className="flex flex-wrap justify-between -mx-4">
+          
+          {/* Cột 1: Giới thiệu */}
+          <div className="w-full lg:w-1/4 sm:w-1/2 px-4 mb-10 lg:mb-0">
+            <img src="/images/main-logo.png" alt="logo" className="mb-6 h-10 object-contain" />
+            <p className="text-gray-500 mb-6 leading-relaxed">
+              Nisi, purus vitae, ultrices nunc. Sit ac sit suscipit hendrerit. Gravida massa volutpat aenean odio erat nullam fringilla.
+            </p>
+            <div className="flex space-x-4">
+              <a href="#" className="text-gray-400 hover:text-red-500 transition-colors"><svg className="w-6 h-6"><use xlinkHref="#facebook" /></svg></a>
+              <a href="#" className="text-gray-400 hover:text-red-500 transition-colors"><svg className="w-6 h-6"><use xlinkHref="#instagram" /></svg></a>
+              <a href="#" className="text-gray-400 hover:text-red-500 transition-colors"><svg className="w-6 h-6"><use xlinkHref="#twitter" /></svg></a>
+              <a href="#" className="text-gray-400 hover:text-red-500 transition-colors"><svg className="w-6 h-6"><use xlinkHref="#youtube" /></svg></a>
+            </div>
+          </div>
 
-export default Footer
+          {/* Cột 2: Menu Nhanh */}
+          <div className="w-full lg:w-1/6 sm:w-1/2 px-4 mb-10 lg:mb-0">
+            <h5 className="font-bold text-lg mb-6 text-gray-900">Quick Links</h5>
+            <ul className="space-y-3 font-medium">
+              <li><Link to="/" className="text-gray-500 hover:text-red-500 transition-colors">Home</Link></li>
+              <li><Link to="/about" className="text-gray-500 hover:text-red-500 transition-colors">About</Link></li>
+              <li><Link to="/shop" className="text-gray-500 hover:text-red-500 transition-colors">Shop</Link></li>
+              <li><Link to="/blogs" className="text-gray-500 hover:text-red-500 transition-colors">Blogs</Link></li>
+              <li><Link to="/contact" className="text-gray-500 hover:text-red-500 transition-colors">Contact</Link></li>
+            </ul>
+          </div>
+
+          {/* Cột 3: Hỗ trợ */}
+          <div className="w-full lg:w-1/4 sm:w-1/2 px-4 mb-10 lg:mb-0">
+            <h5 className="font-bold text-lg mb-6 text-gray-900">Help & Info</h5>
+            <ul className="space-y-3 font-medium">
+              <li><a href="#" className="text-gray-500 hover:text-red-500 transition-colors">Track Your Order</a></li>
+              <li><a href="#" className="text-gray-500 hover:text-red-500 transition-colors">Returns Policies</a></li>
+              <li><a href="#" className="text-gray-500 hover:text-red-500 transition-colors">Shipping + Delivery</a></li>
+              <li><Link to="/contact" className="text-gray-500 hover:text-red-500 transition-colors">Contact Us</Link></li>
+              <li><a href="#" className="text-gray-500 hover:text-red-500 transition-colors">Faqs</a></li>
+            </ul>
+          </div>
+
+          {/* Cột 4: Liên hệ */}
+          <div className="w-full lg:w-1/4 sm:w-1/2 px-4">
+            <h5 className="font-bold text-lg mb-6 text-gray-900">Contact Us</h5>
+            <p className="text-gray-500 mb-4 font-medium">Do you have any queries or suggestions? <br/><a href="mailto:yourinfo@gmail.com" className="text-red-500 hover:underline">yourinfo@gmail.com</a></p>
+            <p className="text-gray-500 font-medium">If you need support? Just give us a call. <br/><a href="tel:+5511122233344" className="text-red-500 hover:underline">+55 111 222 333 44</a></p>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Dải dưới cùng: Bản quyền & Thanh toán */}
+      <div className="container mx-auto px-4 md:px-10 mt-16 pt-8 border-t border-gray-100">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+          
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center">
+              <span className="text-sm font-semibold text-gray-900 mr-3">We ship with:</span>
+              <img src="/images/dhl.png" alt="dhl" className="h-6 object-contain mr-2" />
+              <img src="/images/shippingcard.png" alt="shipping" className="h-6 object-contain" />
+            </div>
+            <div className="flex items-center border-l border-gray-200 pl-6">
+              <span className="text-sm font-semibold text-gray-900 mr-3">Payment options:</span>
+              <img src="/images/visa.jpg" alt="visa" className="h-6 object-contain mr-2" />
+              <img src="/images/mastercard.jpg" alt="mastercard" className="h-6 object-contain mr-2" />
+              <img src="/images/paypal.jpg" alt="paypal" className="h-6 object-contain" />
+            </div>
+          </div>
+          
+          <p className="text-sm text-gray-500 font-medium">
+            © 2024 Bookly. React Version Built by You.
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;
