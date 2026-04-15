@@ -26,17 +26,20 @@ const Coupons = () => {
   for (let i = 0; i < coupons?.length; i++) {
     data.push({
       key: i + 1,
-      id: coupons[i]._id,
       name: coupons[i].code,
-      description: coupons[i].des,
-      value: coupons[i].discountValue,
-      minPurchaseAmount: coupons[i].minPurchaseAmount,
       maxUses: coupons[i].maxUses,
       currentUses: coupons[i].currentUses,
-      expiryDate: coupons[i].expiryDate,
+      expiryDate: new Date(coupons[i].expiryDate).toLocaleDateString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }),
       isActive: coupons[i].isActive == true ? "Activated" : "Inactive",
-      createdAt: coupons[i].createdAt,
-      updatedAt: coupons[i].updatedAt,
+      createdAt: new Date(coupons[i].createdAt).toLocaleDateString(),
+      updatedAt: new Date(coupons[i].updatedAt).toLocaleDateString(),
     });
   }
   const handleView = (e) => {

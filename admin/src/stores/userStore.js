@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import { toast } from "sonner"; 
+import { toast } from "sonner";
 import userService from "../services/userService";
 
-export const useUserStore =create((set,get) =>({
-    users: [],
+export const useUserStore = create((set, get) => ({
+  users: [],
   user: null,
   isLoading: false,
   isSuccess: false,
@@ -29,20 +29,31 @@ export const useUserStore =create((set,get) =>({
       isError: false,
     });
   },
-  userGetAll: async () =>{
-    try{
-        set({isLoading: true});
-        const user = await userService.getUsers();
-        console.log(user)
-        if(user){
-            get().setUsers(user)
-        };
-        set({isSuccess: true})
-    }catch(err){
-        console.log(err)
-        set({isError: true})
-    }finally{
-        set({isLoading: false})
+  userGetAll: async () => {
+    try {
+      set({ isLoading: true });
+      const user = await userService.getUsers();
+      if (user) {
+        get().setUsers(user);
+      }
+      set({ isSuccess: true });
+    } catch (err) {
+      console.log(err);
+      set({ isError: true });
+    } finally {
+      set({ isLoading: false });
     }
-  }
-}))
+  },
+  toggleUserLock: async (userId) => {
+    try {
+      set({ isLoading: true });
+
+      await userService.toggleUserLock(userId);
+      get().userGetAll();
+      set({ isSuccess: true });
+      toast.success("User lock status toggled successfully!");
+    } catch (error) {
+      console.log(error);
+    }
+  },
+}));

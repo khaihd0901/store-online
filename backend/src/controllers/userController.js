@@ -14,7 +14,9 @@ import mongoose from "mongoose";
 // GET ALL USERS
 // ============================
 export const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find().select("-hashedPassword");
+  const users = await User.find({ isAdmin: false })
+    .select("-hashedPassword");
+
   res.status(200).json(users);
 });
 
@@ -86,7 +88,35 @@ export const deleteUser = asyncHandler(async (req, res) => {
     message: "User deleted successfully",
   });
 });
+// ============================
+// LOCK USER
+// ============================
+export const toggleUserLock = asyncHandler(async (req, res) => {
+  const { id } = req.params;
 
+  const user = await User.findById(id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  user.isLocked = !user.isLocked;
+
+  if (user.isLocked) {
+    user.lockedAt = new Date();
+  } else {
+    user.lockReason = undefined;
+    user.lockedAt = undefined;
+  }
+
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    isLocked: user.isLocked,
+  });
+});
 // ============================
 // UPDATE PASSWORD
 // ============================

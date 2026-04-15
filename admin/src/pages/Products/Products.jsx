@@ -33,7 +33,6 @@ export default function Product() {
 
   const products = data.map((item, index) => ({
     key: index + 1,
-    id: item._id,
     name: item.title,
     author: item.author,
     category: item.category?.categoryName || "-",

@@ -6,9 +6,18 @@ const menuItems = [
     icon: Database,
     label: "Catalog",
      submenu: [
-      { id: "products", label: "Product List" },
-      { id: "coupons", label: "Coupon List" },
+      { id: "products", label: "Book List" },
       { id: "categories", label: "Category List" },
+      { id: "coupons", label: "Coupon List" },
+    ],
+  },
+  {
+    id: "users",
+    icon: Users,
+    label: "Users",
+    submenu: [
+      { id: "all-users", label: "All Users" },
+      // { id: "activity", label: "User Activity" },
     ],
   },
   {
@@ -19,15 +28,6 @@ const menuItems = [
     submenu: [
       { id: "order-list", label: "Orders List" },
       // { id: "order", label: "Order Detail" },
-    ],
-  },
-  {
-    id: "users",
-    icon: Users,
-    label: "Users",
-    submenu: [
-      { id: "all-users", label: "All Users" },
-      // { id: "activity", label: "User Activity" },
     ],
   },
 ];
