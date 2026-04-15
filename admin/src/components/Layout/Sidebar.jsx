@@ -31,7 +31,7 @@ const Sidebar = ({ collapsed, currentPage, onPageChange }) => {
           </Link>
           {!collapsed && (
             <div className="">
-              <p className="text-xl font-bold text-gray-800">Simp1e</p>
+              <p className="text-xl font-bold text-gray-800">Bookly</p>
               <p className="text-xs text-gray-500">Admin Panel</p>
             </div>
           )}
