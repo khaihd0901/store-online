@@ -1,10 +1,7 @@
-export default function Modal({ children, onClose, onSubmit }) {
+export default function Modal({ children, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <form
-        onSubmit={onSubmit}
-        className="bg-gray-100 rounded-xl p-6 relative min-w-7xl"
-      >
+      <div className="bg-gray-100 rounded-xl p-6 relative min-w-7xl">
         <button
           type="button"
           onClick={onClose}
@@ -14,7 +11,7 @@ export default function Modal({ children, onClose, onSubmit }) {
         </button>
 
         {children}
-      </form>
+      </div>
     </div>
   );
 }

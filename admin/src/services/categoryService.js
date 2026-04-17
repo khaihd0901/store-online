@@ -4,8 +4,11 @@ const getCategories = async () => {
   const res = await api.get(`category` );
   return res.data;
 };
-const getCategoryById = async (id) => {
-  const res = await api.get(`category/${id}` );
+export const getCategoryById = async (id, page = 1, limit = 5) => {
+  const res = await api.get(`/category/${id}`, {
+    params: { page, limit },
+  });
+
   return res.data;
 };
 const createCategory = async (data) => {

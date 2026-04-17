@@ -49,63 +49,6 @@ export const getProducts = asyncHandler(async (req, res) => {
 // ============================
 // SEARCH AND FILTER PRODUCTS
 // ============================
-// export const searchProducts = asyncHandler(async (req, res) => {
-//   // 1️⃣ Clone query object
-//   const queryObj = { ...req.query };
-//   console.log(queryObj)
-//   const excludeFields = ["page", "sort", "limit", "fields", "search"];
-//   excludeFields.forEach((el) => delete queryObj[el]);
-
-//   // 2️⃣ Advanced filtering (gte, lte, etc.)
-//   let queryStr = JSON.stringify(queryObj);
-//   queryStr = queryStr.replace(
-//     /\b(gte|gt|lte|lt)\b/g,
-//     (match) => `$${match}`
-//   );
-
-//   let parsedQuery = JSON.parse(queryStr);
-
-//   // 3️⃣ Search (text search)
-// if (req.query.search) {
-//   parsedQuery.$or = [
-//     { title: { $regex: req.query.search, $options: "i" } },
-//   ];
-// }
-// console.log("FINAL QUERY:", parsedQuery);
-
-//   // 4️⃣ Build query
-//   let query = Product.find(parsedQuery)
-//     .populate("category")
-//     .populate("brand");
-
-//   // 5️⃣ Sorting
-//   if (req.query.sort) {
-//     query = query.sort(req.query.sort.split(",").join(" "));
-//   }
-//   // else if (req.query.search) {
-//   //   // sort by relevance when searching
-//   //   query = query.sort({ score: { $meta: "textScore" } });
-//   // }
-//   else {
-//     query = query.sort("-harvestDate");
-//   }
-
-//   // 6️⃣ Field limiting
-//   if (req.query.fields) {
-//     query = query.select(req.query.fields.split(",").join(" "));
-//   }
-
-//   // 7️⃣ Pagination
-//   const page = Number(req.query.page) || 1;
-//   const limit = Number(req.query.limit) || 20;
-//   const skip = (page - 1) * limit;
-
-//   query = query.skip(skip).limit(limit);
-
-//   // 8️⃣ Execute
-//   const products = await query;
-//   res.status(200).json(products);
-// });
 export const searchProducts = asyncHandler(async (req, res) => {
   const queryObj = { ...req.query };
   const excludeFields = ["page", "sort", "limit", "fields", "search"];
@@ -185,6 +128,7 @@ export const getProductById = asyncHandler(async (req, res) => {
 // ============================
 export const updateProduct = asyncHandler(async (req, res) => {
   let { removedImages = [], newImages = [], ...updateData } = req.body;
+  console.log("REQ BODY:", req.body);
 
   if (!Array.isArray(removedImages)) {
     removedImages = JSON.parse(removedImages || "[]");
@@ -218,7 +162,6 @@ export const updateProduct = asyncHandler(async (req, res) => {
   Object.assign(product, updateData);
 
   product.markModified("images");
-
   const saved = await product.save();
 
   // ✅ New references
@@ -227,20 +170,22 @@ export const updateProduct = asyncHandler(async (req, res) => {
   // ---------- CATEGORY SYNC ----------
   if (oldCategory && newCategory && oldCategory !== newCategory) {
     await Category.findByIdAndUpdate(oldCategory, {
-      $pull: { products: saved._id },
+      $pull: { books: saved._id },
     });
 
     await Category.findByIdAndUpdate(newCategory, {
-      $addToSet: { products: saved._id },
+      $addToSet: { books: saved._id },
     });
   }
 
   if (!oldCategory && newCategory) {
     await Category.findByIdAndUpdate(newCategory, {
-      $addToSet: { products: saved._id },
+      $addToSet: { books: saved._id },
     });
   }
-
+console.log("OLD:", oldCategory);
+console.log("NEW:", updateData.category);
+console.log("AFTER SAVE:", newCategory);
   res.status(200).json(saved);
 });
 

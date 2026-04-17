@@ -47,7 +47,7 @@ export default function CouponDetail({ couId, onClose }) {
     }
   },[])
   return (
-    <Modal onClose={onClose} onSubmit={formik.handleSubmit}>
+    <Modal onClose={onClose}>
       {/* 🔥 RELATIVE WRAPPER */}
       <div className="relative">
         {/* 🔥 LOADING OVERLAY */}
@@ -173,7 +173,8 @@ export default function CouponDetail({ couId, onClose }) {
           </button>
 
           <button
-            type="submit"
+            type="button"
+            onClick={formik.handleSubmit}
             disabled={isLoading}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
           >

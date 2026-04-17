@@ -6,20 +6,16 @@ import ConfirmModal from "../../components/ConfirmDialog";
 import { useCategoryStore } from "../../stores/categoryStore";
 
 const Categories = () => {
-  const {
-    categoryDeleteById,
-    categoryGetAll,
-    clearState,
-    categories,
-  } = useCategoryStore();
+  const { categoryDeleteById, categoryGetAll, clearState, categories } =
+    useCategoryStore();
   const [categoryId, setCategoryId] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [confirmId, setConfirmId] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const addCategory = () => {
     setShowAdd(false);
   };
   const handleDeleteClick = (e) => {
-    setConfirmId(e.id); // open confirm modal
+     setSelectedCategory(e); // store full object (id + books)
   };
 
   useEffect(() => {
@@ -78,25 +74,38 @@ const Categories = () => {
         )}
       </div>
 
-      {confirmId && (
-        <ConfirmModal
-          open={true}
-          title="Delete product?"
-          message="This action cannot be undone."
-          confirmText="Delete"
-          onCancel={() => setConfirmId(null)}
-          onConfirm={() => {
-            categoryDeleteById(confirmId)
-              .then(() => {
-                categoryGetAll();
-                setConfirmId(null);
-              })
-              .catch(() => {
-                setConfirmId(null);
-              });
-          }}
-        />
-      )}
+{selectedCategory && (
+  <ConfirmModal
+    open={true}
+    title={
+      selectedCategory.books > 0
+        ? "Cannot Delete Category"
+        : "Delete Category?"
+    }
+    message={
+      selectedCategory.books > 0
+        ? "This category contains products. Please move or delete them first."
+        : "This action cannot be undone."
+    }
+    confirmText={selectedCategory.books > 0 ? "OK" : "Delete"}
+    onCancel={() => setSelectedCategory(null)}
+    onConfirm={() => {
+      if (selectedCategory.books > 0) {
+        setSelectedCategory(null);
+        return;
+      }
+
+      categoryDeleteById(selectedCategory.id)
+        .then(() => {
+          categoryGetAll();
+          setSelectedCategory(null);
+        })
+        .catch(() => {
+          setSelectedCategory(null);
+        });
+    }}
+  />
+)}
     </>
   );
 };

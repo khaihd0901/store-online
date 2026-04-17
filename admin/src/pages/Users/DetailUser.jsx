@@ -46,7 +46,7 @@ const DetailUser = ({ onClose, userId }) => {
   }, [isSuccess, onClose]);
 
   return (
-    <Modal onClose={onClose} onSubmit={formik.handleSubmit}>
+    <Modal onClose={onClose}>
       <div className="relative">
         <h2 className="text-lg font-semibold mb-4">User Detail</h2>
         <div className="p-4 bg-gray-100 min-w-5xl">
@@ -114,7 +114,8 @@ const DetailUser = ({ onClose, userId }) => {
             Close
           </button>
           <button
-            type="submit"
+            type="button"
+            onClick={formik.handleSubmit}
             disabled={isLoading}
             className="bg-blue-500 text-white px-4 py-2 rounded-lg disabled:opacity-50"
           >

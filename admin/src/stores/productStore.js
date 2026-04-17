@@ -34,22 +34,22 @@ export const useProductStore = create((set, get) => ({
       isError: false,
     });
   },
-  // productGetAll: async () => {
-  //   try {
-  //     set({ isLoading: true });
-  //     const data = await productService.getProducts();
-  //     if (data) {
-  //       get().setProducts(data);
-  //     }
-  //   } catch (err) {
-  //     console.log(err);
-  //     set({ isError: true });
-  //   } finally {
-  //     set({
-  //       isLoading: false,
-  //     });
-  //   }
-  // },
+  productGetAll: async () => {
+    try {
+      set({ isLoading: true });
+      const data = await productService.getProducts();
+      if (data) {
+        get().setProducts(data);
+      }
+    } catch (err) {
+      console.log(err);
+      set({ isError: true });
+    } finally {
+      set({
+        isLoading: false,
+      });
+    }
+  },
   productSearch: async (query = {}) => {
   try {
     set({ isLoading: true, lastQuery: query });
@@ -101,9 +101,9 @@ export const useProductStore = create((set, get) => ({
   },
   productUpdate: async (id, data) => {
     try {
-      set({ isLoading: true });
+      set({ isLoading: true, isSuccess: false });
       await productService.updateProduct(id, data);
-      set({ isSuccess: true });
+      set({ isSuccess: true, isLoading: false });
       toast.success("Update product Success");
     } catch (err) {
       console.log(err);
@@ -129,15 +129,8 @@ export const useProductStore = create((set, get) => ({
   toggleHotProduct: async (id) => {
   try {
     set({ isLoading: true });
-
     await productService.toggleHotProduct(id);
-
-    const { lastQuery } = get();
-
-    await get().productSearch(lastQuery);
-
-    toast.success("Toggle hot product Success");
-
+    
   } catch (err) {
     console.log(err);
     set({ isError: true });

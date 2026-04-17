@@ -5,6 +5,8 @@ import { toast } from "sonner";
 export const useCategoryStore = create((set, get) => ({
   categories: [],
   category: null,
+  books: [],
+  pagination: {},
   isLoading: false,
   isSuccess: false,
   isError: false,
@@ -24,6 +26,8 @@ export const useCategoryStore = create((set, get) => ({
   clearState: () => {
     set({
       categories: [],
+      pagination: {},
+      books: [],
       category: null,
       isLoading: false,
       isSuccess: false,
@@ -46,13 +50,18 @@ export const useCategoryStore = create((set, get) => ({
     }
   },
 
-  categoryGetById: async (id) => {
+  categoryGetById: async (id,page=1) => {
     try {
       set({ isLoading: true });
-      const data = await categoryService.getCategoryById(id);
+      const data = await categoryService.getCategoryById(id,page);
       if (data) {
         get().setCategory(data);
       }
+        set({
+        books: data.books,
+        pagination: data.pagination,
+        isLoading: false,
+      });
     } catch (err) {
       console.log(err);
       set({ isError: true });
@@ -60,7 +69,6 @@ export const useCategoryStore = create((set, get) => ({
       set({ isLoading: false });
     }
   },
-
   categoryCreate: async (data) => {
     try {
       set({ isLoading: true });
