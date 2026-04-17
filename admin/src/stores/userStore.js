@@ -4,6 +4,7 @@ import userService from "../services/userService";
 
 export const useUserStore = create((set, get) => ({
   users: [],
+  deletedUsers: [],
   user: null,
   isLoading: false,
   isSuccess: false,
@@ -12,6 +13,11 @@ export const useUserStore = create((set, get) => ({
   setUsers: (data) => {
     set({
       users: data,
+    });
+  },
+   setDeletedUsers: (data) => {
+    set({
+      deletedUsers: data,
     });
   },
   setUser: (data) => {
@@ -39,6 +45,21 @@ export const useUserStore = create((set, get) => ({
       set({ isSuccess: true });
     } catch (err) {
       console.log(err);
+      set({ isError: true });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  
+  userGetDeleted: async () => {
+    try {
+      set({ isLoading: true });
+      const users = await userService.getDeletedUsers();
+      if (users) {
+        get().setDeletedUsers(users);
+      }
+    } catch (error) {
+      console.log(error);
       set({ isError: true });
     } finally {
       set({ isLoading: false });
@@ -77,7 +98,7 @@ export const useUserStore = create((set, get) => ({
     try {
       set({ isLoading: true });
       await userService.deleteUser(userId);
-      get().userGetAll();
+      get().userGetDeleted();
       set({ isSuccess: true });
       toast.success("User deleted successfully!");
     } catch (error) {
@@ -99,20 +120,6 @@ export const useUserStore = create((set, get) => ({
       console.log(error);
       set({ isError: true });
       toast.error("Failed to restore user");
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-  userGetDeleted: async () => {
-    try {
-      set({ isLoading: true });
-      const users = await userService.getDeletedUsers();
-      if (users) {
-        get().setUsers(users);
-      }
-    } catch (error) {
-      console.log(error);
-      set({ isError: true });
     } finally {
       set({ isLoading: false });
     }

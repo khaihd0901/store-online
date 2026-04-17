@@ -26,7 +26,7 @@ export const createProduct = asyncHandler(async (req, res) => {
     await Category.findByIdAndUpdate(
       category,
       { $addToSet: { books: product[0]._id } }, // no duplicates
-      { session }
+      { session },
     );
     await session.commitTransaction();
     res.status(201).json(product[0]);
@@ -42,8 +42,7 @@ export const createProduct = asyncHandler(async (req, res) => {
 // GET ALL PRODUCTS
 // ============================
 export const getProducts = asyncHandler(async (req, res) => {
-  const products = await Product.find()
-    .populate("category")
+  const products = await Product.find().populate("category");
   res.status(200).json(products);
 });
 
@@ -82,11 +81,11 @@ export const getProducts = asyncHandler(async (req, res) => {
 //   // 5️⃣ Sorting
 //   if (req.query.sort) {
 //     query = query.sort(req.query.sort.split(",").join(" "));
-//   } 
+//   }
 //   // else if (req.query.search) {
 //   //   // sort by relevance when searching
 //   //   query = query.sort({ score: { $meta: "textScore" } });
-//   // } 
+//   // }
 //   else {
 //     query = query.sort("-harvestDate");
 //   }
@@ -108,79 +107,70 @@ export const getProducts = asyncHandler(async (req, res) => {
 //   res.status(200).json(products);
 // });
 export const searchProducts = asyncHandler(async (req, res) => {
-  // 1️⃣ Clone query
   const queryObj = { ...req.query };
-
   const excludeFields = ["page", "sort", "limit", "fields", "search"];
   excludeFields.forEach((el) => delete queryObj[el]);
 
-  // 2️⃣ Advanced filtering
   let queryStr = JSON.stringify(queryObj);
-  queryStr = queryStr.replace(
-    /\b(gte|gt|lte|lt)\b/g,
-    (match) => `$${match}`
-  );
-  const filterQuery = JSON.parse(queryStr);
+  queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+  let filterQuery = JSON.parse(queryStr);
 
-  // 3️⃣ Build FINAL query
-  let mongoQuery = {};
+  // ✅ remove empty values
+  Object.keys(filterQuery).forEach((key) => {
+    if (filterQuery[key] === "" || filterQuery[key] == null) {
+      delete filterQuery[key];
+    }
+  });
 
-  // 👉 nếu có filter
-  if (Object.keys(filterQuery).length > 0) {
-    mongoQuery.$and = [{ ...filterQuery }];
+  // ✅ convert boolean
+if (filterQuery.hot !== undefined) {
+  if (filterQuery.hot === "true") filterQuery.hot = true;
+  if (filterQuery.hot === "false") filterQuery.hot = false;
+}
+
+  let mongoQuery = { ...filterQuery };
+
+  // ✅ safe search
+  if (req.query.search && req.query.search.trim() !== "") {
+    mongoQuery.$or = [
+      { title: { $regex: req.query.search.trim(), $options: "i" } },
+    ];
   }
 
-  // 👉 nếu có search
-  if (req.query.search) {
-    const searchQuery = {
-      $or: [
-        { title: { $regex: req.query.search, $options: "i" } },
-        // thêm field khác nếu muốn
-        // { description: { $regex: req.query.search, $options: "i" } },
-      ],
-    };
+  console.log("FINAL QUERY:", mongoQuery);
 
-    mongoQuery.$and
-      ? mongoQuery.$and.push(searchQuery)
-      : (mongoQuery = searchQuery);
-  }
+  let query = Product.find(mongoQuery).populate("category");
+  // ✅ add sorting
+if (req.query.sort) {
+  const sortBy = req.query.sort.split(",").join(" ");
+  query = query.sort(sortBy);
+}
 
-  console.log("FINAL QUERY:", JSON.stringify(mongoQuery, null, 2));
-
-  // 4️ Build query
-  let query = Product.find(mongoQuery)
-    .populate("category")
-
-  // 5️ Sorting
-  if (req.query.sort) {
-    query = query.sort(req.query.sort.split(",").join(" "));
-  } else {
-    query = query.sort("-createdAt");
-  }
-
-  // 6️ Field limiting
-  if (req.query.fields) {
-    query = query.select(req.query.fields.split(",").join(" "));
-  }
-
-  // 7️⃣ Pagination
+  // pagination
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 20;
   const skip = (page - 1) * limit;
 
   query = query.skip(skip).limit(limit);
 
-  // 8️⃣ Execute
   const products = await query;
-  res.status(200).json(products);
-});
+  const total = await Product.countDocuments(mongoQuery);
 
+  res.status(200).json({
+    data: products,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
+});
 // ============================
 // GET PRODUCT BY ID
 // ============================
 export const getProductById = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id)
-    .populate("category")
+  const product = await Product.findById(req.params.id).populate("category");
 
   if (!product) {
     res.status(404);
@@ -189,7 +179,6 @@ export const getProductById = asyncHandler(async (req, res) => {
 
   res.status(200).json(product);
 });
-
 
 // ============================
 // UPDATE PRODUCT
@@ -217,7 +206,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
   if (removedImages.length > 0) {
     await Promise.all(removedImages.map((id) => deleteImage(id)));
     product.images = product.images.filter(
-      (img) => !removedImages.includes(img.public_id)
+      (img) => !removedImages.includes(img.public_id),
     );
   }
 
@@ -255,8 +244,6 @@ export const updateProduct = asyncHandler(async (req, res) => {
   res.status(200).json(saved);
 });
 
-
-
 // ============================
 // DELETE PRODUCT
 // ============================
@@ -269,11 +256,10 @@ export const deleteProduct = asyncHandler(async (req, res) => {
   }
   const imgIds = product.images.map((img) => img.public_id);
   if (imgIds.length > 0) {
-    await Promise.all(imgIds.map((id => deleteImage(id) )))
+    await Promise.all(imgIds.map((id) => deleteImage(id)));
   }
   await Product.findByIdAndDelete(req.params.id);
-  
-  
+
   if (product.category) {
     await Category.findByIdAndUpdate(product.category, {
       $pull: { products: product._id },

@@ -4,6 +4,12 @@ const getProducts = async () => {
   const res = await api.get(`product`);
   return res.data;
 };
+const searchProducts = async (query) => {
+  const res = await api.get("product/search", {
+    params: query,
+  });
+  return res.data;
+};
 const uploadProductImage = async (files) => {
   const formData = new FormData();
   files.forEach((file) => {
@@ -45,7 +51,8 @@ const productService = {
   updateProduct,
   getProductById,
   deleteProductById,
-  toggleHotProduct
+  toggleHotProduct,
+  searchProducts
 };
 
 export default productService;

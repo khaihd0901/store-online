@@ -48,12 +48,4 @@ const bookSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
-bookSchema.pre("save", function (next) {
-  if (this.sold >= 200) {
-    this.isHot = true;
-  } else {
-    this.isHot = false;
-  }
-  next();
-});
 export default mongoose.model("Product", bookSchema);
