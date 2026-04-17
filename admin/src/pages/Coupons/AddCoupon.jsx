@@ -45,7 +45,7 @@ const AddCoupon = ({ onClose }) => {
     }
   }, [isSuccess, onClose]);
   return (
-    <Modal onClose={onClose} onSubmit={formik.handleSubmit}>
+    <Modal onClose={onClose}>
       <div className="relative">
         {/* FORM */}
         <div className="p-4 bg-gray-100 min-w-5xl">
@@ -201,7 +201,8 @@ const AddCoupon = ({ onClose }) => {
           </button>
 
           <button
-            type="submit"
+            type="button"
+            onClick={formik.handleSubmit}
             disabled={isLoading}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
           >

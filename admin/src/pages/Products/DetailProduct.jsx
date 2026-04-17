@@ -18,6 +18,8 @@ const DetailProduct = ({ onClose, prodId }) => {
     productUpdate,
     isSuccess,
     isLoading,
+    toggleHotProduct,
+    clearState
   } = useProductStore();
   const { categoryGetAll, categories } = useCategoryStore();
 
@@ -51,8 +53,8 @@ const DetailProduct = ({ onClose, prodId }) => {
       price: product?.price || "",
       stock: product?.stock || 0,
       description: product?.description || "",
-      isHot: product?.isHot || false, 
-
+      publishedDate: product?.publishedDate || "",
+      isHot: product?.isHot || false,
     },
     validationSchema,
     onSubmit: async (values) => {
@@ -61,8 +63,7 @@ const DetailProduct = ({ onClose, prodId }) => {
       if (images?.length > 0) {
         uploadedImages = await productUploadImages(images);
       }
-      console.log("uploadedImages", uploadedImages);
-      await productUpdate({
+      const res =await productUpdate({
         id: prodId,
         data: {
           ...values,
@@ -72,15 +73,14 @@ const DetailProduct = ({ onClose, prodId }) => {
       });
     },
   });
-
   useEffect(() => {
     if (isSuccess) {
+      clearState();
       onClose(true);
     }
-  }, []);
-
+  }, [isSuccess]);
   return (
-    <Modal onClose={onClose} onSubmit={formik.handleSubmit}>
+    <Modal onClose={onClose}>
       <div className="relative">
         <h2 className="text-lg font-semibold mb-4">Book Detail</h2>
         <div className="p-4 bg-gray-100 min-w-5xl">
@@ -196,8 +196,48 @@ const DetailProduct = ({ onClose, prodId }) => {
                       ) : null}
                     </div>
                   </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                      <span className="font-medium">Published Date</span>
+
+                      <input
+                        type="date"
+                        name="publishedDate"
+                        value={
+                          formik.values.publishedDate
+                            ? formik.values.publishedDate.split("T")[0]
+                            : ""
+                        }
+                        onChange={formik.handleChange}
+                        className="w-full pl-4 pr-4 py-2.5 bg-gray-100 border border-gray-300
+    rounded-xl text-gray-800 focus:outline-none 
+    focus:ring-2 focus:ring-[var(--color-fdaa3d)]"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <span className="font-medium">Hot Product</span>
+
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const newValue = !formik.values.isHot;
+
+                          formik.setFieldValue("isHot", newValue);
+
+                          await toggleHotProduct(prodId);
+                        }}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition
+    ${formik.values.isHot ? "bg-red-500" : "bg-gray-400"}`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition
+      ${formik.values.isHot ? "translate-x-6" : "translate-x-1"}`}
+                        />
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex flex-col gap-2">
-                      <span className="font-medium">Description</span>
+                    <span className="font-medium">Description</span>
 
                     <textarea
                       onChange={formik.handleChange("description")}
@@ -231,7 +271,8 @@ const DetailProduct = ({ onClose, prodId }) => {
             Close
           </button>
           <button
-            type="submit"
+            type="button"
+            onClick={formik.handleSubmit}
             disabled={isLoading}
             className="bg-blue-500 text-white px-4 py-2 rounded-lg disabled:opacity-50"
           >

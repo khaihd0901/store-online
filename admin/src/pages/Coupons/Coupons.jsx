@@ -38,7 +38,7 @@ const Coupons = () => {
         minute: "2-digit",
         second: "2-digit",
       }),
-      isActive: coupons[i].isActive == true ? "Activated" : "Inactive",
+      isActive: coupons[i].isActive == true ? <div className="text-green-500">Activated</div> : <div className="text-red-500">Inactive</div>,
       createdAt: new Date(coupons[i].createdAt).toLocaleDateString(),
       updatedAt: new Date(coupons[i].updatedAt).toLocaleDateString(),
     });

@@ -1,3 +1,4 @@
+import { ArrowUp, ArrowDown } from "lucide-react";
 export default function Table({
   data,
   onDelete,
@@ -7,7 +8,7 @@ export default function Table({
   sortKey,
   sortOrder,
   onFilter,
-  categories
+  categories,
 }) {
   const columnConfig = {
     name: { sortable: false },
@@ -45,80 +46,84 @@ export default function Table({
       <table className="w-full text-sm">
         <thead className="bg-gray-200">
           <tr>
-            <th className="px-4 py-3">No.</th>
+            <th className="px-4 py-3 text-center">No.</th>
 
             {columns.map((col, i) => (
-  <th
-    key={i}
-    className={`px-4 py-3 ${
-      col.config.sortable ? "cursor-pointer" : ""
-    }`}
-    onClick={() =>
-      col.config.sortable && onSort && onSort(col.key)
-    }
-  >
-    <div className="flex items-center gap-1">
-      {col.header}
+              <th
+                key={i}
+                className={`px-4 py-3 text-center ${
+                  col.config.sortable ? "cursor-pointer" : ""
+                }`}
+                onClick={() => col.config.sortable && onSort && onSort(col.key)}
+              >
+                <div className="flex items-center justify-center gap-1">
+                  {!["category", "hotStatus"].includes(col.key) && col.header}
 
-      {col.config.sortable && sortKey === col.key && (
-        <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
-      )}
-    </div>
+                  {col.config.sortable && sortKey === col.key && (
+                    <>
+                      {sortOrder === "asc" ? (
+                        <ArrowUp size={16} />
+                      ) : (
+                        <ArrowDown size={16} />
+                      )}
+                    </>
+                  )}
+                </div>
 
-    {/* CATEGORY FILTER */}
-    {col.key === "category" && onFilter && (
-      <select
-        onClick={(e) => e.stopPropagation()}
-        onChange={(e) => onFilter("category", e.target.value)}
-        className="mt-1 w-full px-2 py-1 border rounded text-xs"
-      >
-        <option value="">Category</option>
-        {categories.map((category) => (
-          <option key={category._id} value={category._id}>
-            {category.categoryName}
-          </option>
-        ))}
-      </select>
-    )}
+                {/* CATEGORY FILTER */}
+                {col.key === "category" && onFilter && (
+                  <select
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => onFilter("category", e.target.value)}
+                    className="mt-1 w-fit px-2 py-1 border rounded text-xs mx-auto block"
+                  >
+                    <option value="">Category</option>
+                    {categories.map((category) => (
+                      <option key={category._id} value={category._id}>
+                        {category.categoryName}
+                      </option>
+                    ))}
+                  </select>
+                )}
 
-    {/* HOT FILTER */}
-{col.key === "hotStatus" && onFilter && (
-  <select
-    onClick={(e) => e.stopPropagation()}
-    onChange={(e) => {
-      const value = e.target.value;
+                {/* HOT FILTER */}
+                {col.key === "hotStatus" && onFilter && (
+                  <select
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => {
+                      const value = e.target.value;
 
-      onFilter(
-        "isHot",
-        value === "" ? undefined : value === "true"
-      );
-    }}
-    className="mt-1 w-full px-2 py-1 border rounded text-xs"
-  >
-    <option value="">All</option>
-    <option value="true">Hot</option>
-    <option value="false">Not Hot</option>
-  </select>
-)}
-  </th>
-))}
+                      onFilter(
+                        "isHot",
+                        value === "" ? undefined : value === "true",
+                      );
+                    }}
+                    className="mt-1 w-fit px-2 py-1 border rounded text-xs mx-auto block"
+                  >
+                    <option value="">Hot Status</option>
+                    <option value="true">Hot</option>
+                    <option value="false">Not Hot</option>
+                  </select>
+                )}
+              </th>
+            ))}
 
-            <th className="text-right px-4 py-3">Actions</th>
+            <th className="px-4 py-3 text-center">Actions</th>
           </tr>
         </thead>
 
         <tbody>
           {data.map((d, index) => (
             <tr key={index} className="border-t border-gray-200">
-              <td className="px-4 py-3">{d.key}</td>
+              <td className="px-4 py-3 text-center">{d.key}</td>
 
               {columns.map((col, i) => (
-                <td key={i} className="px-4 py-3">
+                <td key={i} className="px-4 py-3 text-center">
                   {d[col.key]}
                 </td>
               ))}
 
-              <td className="px-4 py-3 text-right space-x-3">
+              <td className="px-4 py-3 text-center flex justify-center gap-3">
                 <button
                   onClick={() => onView(d)}
                   className="bg-blue-500 text-white px-2 py-1 rounded-xl"
