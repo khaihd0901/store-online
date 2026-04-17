@@ -16,7 +16,8 @@ const menuItems = [
     icon: Users,
     label: "Users",
     submenu: [
-      { id: "all-users", label: "All Users" },
+      { id: "all-users", label: "Users" },
+      { id: "deleted-users", label: "Deleted Users" },
       // { id: "activity", label: "User Activity" },
     ],
   },

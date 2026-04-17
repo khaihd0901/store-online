@@ -1,5 +1,4 @@
 import Product from "../models/Product.js";
-import User from "../models/User.js";
 import { uploadImages, deleteImage } from "../utils/cloudinary.js";
 import fs from "fs";
 import asyncHandler from "express-async-handler";
@@ -283,43 +282,33 @@ export const deleteProduct = asyncHandler(async (req, res) => {
 
   res.status(200).json({ message: "Product deleted successfully" });
 });
-
-
 // ============================
-// RATE PRODUCT
+// Get best selling products (for homepage)
 // ============================
-export const ratingProduct = asyncHandler(async (req, res) => {
-  const { _id } = req.user;
-  const { star, prodId, comment } = req.body;
+export const getBestSellingProducts = asyncHandler(async (req, res) => {
+  const products = await Product.find()
+    .sort({ sold: -1 })
+    .limit(10)
+    .populate("category");
 
-  const product = await Product.findById(prodId);
+  res.status(200).json(products);
+});
+// ============================
+// TOGGLE HOT PRODUCT
+// ============================
+export const toggleHotProduct = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+
   if (!product) {
     res.status(404);
     throw new Error("Product not found");
   }
 
-  const existingRating = product.ratings.find(
-    (r) => r.postedBy.toString() === _id.toString()
-  );
-
-  if (existingRating) {
-    existingRating.star = star;
-    existingRating.comment = comment;
-  } else {
-    product.ratings.push({ star, comment, postedBy: _id });
-  }
-
-  product.ratingsQuantity = product.ratings.length;
-  product.ratingsAverage =
-    product.ratings.reduce((sum, r) => sum + r.star, 0) /
-    product.ratingsQuantity;
-
+  product.isHot = !product.isHot;
   await product.save();
 
-  res.status(200).json({ message: "Rating submitted successfully" });
+  res.status(200).json(product);
 });
- 
-
 // ============================
 // UPLOAD PRODUCT IMAGES
 // ============================

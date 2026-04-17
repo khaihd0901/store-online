@@ -5,11 +5,13 @@ import DetailUser from "./DetailUser";
 import { useUserStore } from "../../stores/userStore";
 import ConfirmModal from "../../components/ConfirmDialog";
 const Users = () => {
-  const { userGetAll, users, toggleUserLock, clearState,userDelete } = useUserStore();
+  const { userGetDeleted, users, toggleUserLock, clearState, userRestore } =
+    useUserStore();
   const [userId, setUserId] = useState(null);
-    const [confirmId, setConfirmId] = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
+
   useEffect(() => {
-    userGetAll();
+    userGetDeleted();
   }, []);
   const data = [];
   for (let i = 0; i < users?.length; i++) {
@@ -48,7 +50,7 @@ const Users = () => {
     clearState();
     setUserId(null);
     if (shouldReload) {
-      await userGetAll();
+      await userGetDeleted();
     }
   };
   const handleDeleteClick = (e) => {
@@ -57,25 +59,27 @@ const Users = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen rounded-xl shadow">
       <div className="flex justify-between mb-6">
-        <h1 className="text-xl font-semibold">User Management</h1>
+        <h1 className="text-xl font-semibold">User Deleted Management</h1>
       </div>
 
-      <Table data={data} onView={(e) => handleView(e)} onDelete={(e) => handleDeleteClick(e)} />
+      <Table
+        data={data}
+        onView={(e) => handleView(e)}
+        onRestore={(e) => handleDeleteClick(e)}
+      />
 
       {userId && <DetailUser userId={userId} onClose={handleCloseDetail} />}
-
-      
       {confirmId && (
         <ConfirmModal
           open={true}
-          title="Delete this User?"
+          title="Restore this User?"
           message="This action cannot be undone !!!"
-          confirmText="Delete"
+          confirmText="Restore"
           onCancel={() => setConfirmId(null)}
           onConfirm={() => {
-            userDelete(confirmId)
+            userRestore(confirmId)
               .then(() => {
-                userGetAll();
+                userGetDeleted();
                 setConfirmId(null);
               })
               .catch(() => {

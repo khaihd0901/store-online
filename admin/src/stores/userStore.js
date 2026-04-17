@@ -21,9 +21,8 @@ export const useUserStore = create((set, get) => ({
   },
   clearState: () => {
     set({
-      products: [],
-      product: null,
-      images: [],
+      users: [],
+      user: null,
       isLoading: false,
       isSuccess: false,
       isError: false,
@@ -36,6 +35,7 @@ export const useUserStore = create((set, get) => ({
       if (user) {
         get().setUsers(user);
       }
+      console.log(user);
       set({ isSuccess: true });
     } catch (err) {
       console.log(err);
@@ -44,6 +44,80 @@ export const useUserStore = create((set, get) => ({
       set({ isLoading: false });
     }
   },
+  userGetById: async (userId) => {
+    try {
+      set({ isLoading: true });
+      const user = await userService.getUserById(userId);
+      if (user) {
+        get().setUser(user);
+      }
+    } catch (err) {
+      console.log(err);
+      set({ isError: true });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  userUpdate: async (userId, data) => {
+    try {
+      set({ isLoading: true });
+      await userService.updateUser(userId, data);
+      get().userGetById(userId);
+      set({ isSuccess: true });
+      toast.success("User updated successfully!");
+    } catch (error) {
+      console.log(error);
+      set({ isError: true });
+      toast.error("Failed to update user");
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  userDelete: async (userId) => {
+    try {
+      set({ isLoading: true });
+      await userService.deleteUser(userId);
+      get().userGetAll();
+      set({ isSuccess: true });
+      toast.success("User deleted successfully!");
+    } catch (error) {
+      console.log(error);
+      set({ isError: true });
+      toast.error("Failed to delete user");
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  userRestore: async (userId) => {
+    try {
+      set({ isLoading: true });
+      await userService.restoreUser(userId);
+      get().userGetAll();
+      set({ isSuccess: true });
+      toast.success("User restored successfully!");
+    } catch (error) {
+      console.log(error);
+      set({ isError: true });
+      toast.error("Failed to restore user");
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  userGetDeleted: async () => {
+    try {
+      set({ isLoading: true });
+      const users = await userService.getDeletedUsers();
+      if (users) {
+        get().setUsers(users);
+      }
+    } catch (error) {
+      console.log(error);
+      set({ isError: true });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
   toggleUserLock: async (userId) => {
     try {
       set({ isLoading: true });

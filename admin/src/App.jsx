@@ -11,6 +11,7 @@ import Coupons from "./pages/Coupons/Coupons";
 
 import { Toaster } from "sonner";
 import ProtectedRoute from "./components/ProtectedRoute";
+import DeletedUsers from "./pages/Users/DeletedUsers";
 
 function App() {
   return (
@@ -31,6 +32,8 @@ function App() {
               <Route path="coupons" element={<Coupons />} />
               <Route path="order-list" element={<Orders />} />
               <Route path="all-users" element={<Users />} />
+              <Route path="deleted-users" element={<DeletedUsers />} />
+
             </Route>
           </Route>
           {/* Fallback */}

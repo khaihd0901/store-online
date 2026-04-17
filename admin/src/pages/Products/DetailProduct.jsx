@@ -51,7 +51,8 @@ const DetailProduct = ({ onClose, prodId }) => {
       price: product?.price || "",
       stock: product?.stock || 0,
       description: product?.description || "",
-      // harvestDate: product.harvestDate || "",
+      isHot: product?.isHot || false, 
+
     },
     validationSchema,
     onSubmit: async (values) => {
@@ -81,7 +82,7 @@ const DetailProduct = ({ onClose, prodId }) => {
   return (
     <Modal onClose={onClose} onSubmit={formik.handleSubmit}>
       <div className="relative">
-        <h2 className="text-lg font-semibold mb-4">Product Detail</h2>
+        <h2 className="text-lg font-semibold mb-4">Book Detail</h2>
         <div className="p-4 bg-gray-100 min-w-5xl">
           <div className="grid grid-cols-12 gap-4">
             <div className="col-span-12 lg:col-span-4 space-y-6">
@@ -195,28 +196,9 @@ const DetailProduct = ({ onClose, prodId }) => {
                       ) : null}
                     </div>
                   </div>
-
-                  {/* DATES */}
-                  {/* <div className="grid grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-2">
-                      <CustomerInput
-                        i_class="w-full pl-4 pr-4 py-2.5 bg-gray-100 border border-gray-300
-            rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none 
-            focus:ring-2 focus:ring-[var(--color-fdaa3d)] focus:border-transparent transition-all"
-                        type="date"
-                        label="Harvest date"
-                        value={formik.values.harvestDate}
-                        onChange={formik.handleChange("harvestDate")}
-                      />
-                      {formik.touched.harvestDate &&
-                      formik.errors.harvestDate ? (
-                        <div className="text-red-500 text-sm">
-                          {formik.errors.harvestDate}
-                        </div>
-                      ) : null}
-                    </div>
-                  </div> */}
                   <div className="flex flex-col gap-2">
+                      <span className="font-medium">Description</span>
+
                     <textarea
                       onChange={formik.handleChange("description")}
                       value={formik.values.description}

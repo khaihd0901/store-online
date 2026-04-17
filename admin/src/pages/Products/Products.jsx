@@ -5,7 +5,7 @@ import DetailProduct from "./DetailProduct";
 import ConfirmModal from "../../components/ConfirmDialog";
 import { useProductStore } from "../../stores/productStore";
 export default function Product() {
-  const { productGetAll, clearState, productDeleteById, isLoading } =
+  const { productGetAll, clearState, productDeleteById,toggleHotProduct, isLoading } =
     useProductStore();
   const data = useProductStore((s) => s.products);
 
@@ -17,7 +17,7 @@ export default function Product() {
   };
 
   const handleDeleteClick = (e) => {
-    setConfirmId(e.id); // open confirm modal
+    setConfirmId(e.id);
   };
 
   const handleCloseAddProduct = async (reload = true) => {
@@ -33,10 +33,24 @@ export default function Product() {
 
   const products = data.map((item, index) => ({
     key: index + 1,
+    id: item._id,
     name: item.title,
     author: item.author,
     category: item.category?.categoryName || "-",
     stock: item.stock,
+    sold: item.sold,
+      hotStatus: (
+        <button
+          onClick={() => toggleHotProduct(item._id)}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition
+      ${!item.isHot ? "bg-gray-400" : "bg-red-500"}`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition
+        ${!item.isHot ? "translate-x-1" : "translate-x-6"}`}
+          />
+        </button>
+      ),
     price: item.price,
   }));
 

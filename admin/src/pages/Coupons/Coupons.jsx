@@ -26,6 +26,7 @@ const Coupons = () => {
   for (let i = 0; i < coupons?.length; i++) {
     data.push({
       key: i + 1,
+      id: coupons[i]._id,
       name: coupons[i].code,
       maxUses: coupons[i].maxUses,
       currentUses: coupons[i].currentUses,

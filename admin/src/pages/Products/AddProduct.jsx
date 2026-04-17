@@ -37,6 +37,8 @@ export default function AddProductModal({ onClose }) {
       price: "",
       category: "",
       stock: "",
+      isHot: false,
+      publishedDate: "",
       discount: 0,
     },
     validationSchema,
@@ -195,9 +197,30 @@ export default function AddProductModal({ onClose }) {
                         </div>
                       ) : null}
                     </div>
+                    <div className="flex flex-col gap-2">
+                      <span className="font-medium">Hot Product</span>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          formik.setFieldValue("isHot", !formik.values.isHot)
+                        }
+                        className={`w-14 h-8 flex items-center rounded-full p-1 transition ${
+                          formik.values.isHot ? "bg-red-500" : "bg-gray-300"
+                        }`}
+                      >
+                        <div
+                          className={`bg-white w-6 h-6 rounded-full shadow-md transform transition ${
+                            formik.values.isHot ? "translate-x-6" : ""
+                          }`}
+                        />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-2">
+                      <span className="font-medium">Description</span>
+
                     <textarea
                       onChange={formik.handleChange("description")}
                       value={formik.values.description}

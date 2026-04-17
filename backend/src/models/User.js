@@ -67,6 +67,13 @@ const UserSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+    },
     passWordChangedAt: Date,
     passWordResetExpires: Date,
     passWordResetOTP: String,
