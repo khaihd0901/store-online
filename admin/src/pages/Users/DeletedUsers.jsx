@@ -5,7 +5,7 @@ import DetailUser from "./DetailUser";
 import { useUserStore } from "../../stores/userStore";
 import ConfirmModal from "../../components/ConfirmDialog";
 const Users = () => {
-  const { userGetDeleted, users, toggleUserLock, clearState, userRestore } =
+  const { userGetDeleted, deletedUsers, toggleUserLock, clearState, userRestore } =
     useUserStore();
   const [userId, setUserId] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
@@ -14,28 +14,28 @@ const Users = () => {
     userGetDeleted();
   }, []);
   const data = [];
-  for (let i = 0; i < users?.length; i++) {
+  for (let i = 0; i < deletedUsers?.length; i++) {
     data.push({
       key: i + 1,
-      id: users[i]._id,
-      name: users[i].fullName,
-      email: users[i].email,
-      createdAt: new Date(users[i].createdAt).toLocaleDateString(),
+      id: deletedUsers[i]._id,
+      name: deletedUsers[i].fullName,
+      email: deletedUsers[i].email,
+      createdAt: new Date(deletedUsers[i].createdAt).toLocaleDateString(),
       accountVerified:
-        users[i].isVerified === true ? (
+        deletedUsers[i].isVerified === true ? (
           <span className="text-green-500 font-bold">Verified</span>
         ) : (
           <span className="text-red-500 font-bold">Not Verified</span>
         ),
       accountLock: (
         <button
-          onClick={() => toggleUserLock(users[i]._id)}
+          onClick={() => toggleUserLock(deletedUsers[i]._id)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition
-      ${!users[i].isLocked ? "bg-gray-400" : "bg-green-500"}`}
+      ${!deletedUsers[i].isLocked ? "bg-gray-400" : "bg-green-500"}`}
         >
           <span
             className={`inline-block h-4 w-4 transform rounded-full bg-white transition
-        ${!users[i].isLocked ? "translate-x-1" : "translate-x-6"}`}
+        ${!deletedUsers[i].isLocked ? "translate-x-1" : "translate-x-6"}`}
           />
         </button>
       ),

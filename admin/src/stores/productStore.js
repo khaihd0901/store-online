@@ -6,15 +6,18 @@ export const useProductStore = create((set, get) => ({
   products: [],
   imagesData: [],
   product: null,
+  pagination: {},
   isLoading: false,
   isSuccess: false,
   isError: false,
+  lastQuery: {},
 
   setProducts: (data) => {
     set({
       products: data,
     });
   },
+
   setProduct: (data) => {
     set({
       product: data,
@@ -23,29 +26,48 @@ export const useProductStore = create((set, get) => ({
   clearState: () => {
     set({
       products: [],
+      imagesData: [],
       product: null,
-      images: [],
+      pagination: {},
       isLoading: false,
       isSuccess: false,
       isError: false,
     });
   },
-  productGetAll: async () => {
-    try {
-      set({ isLoading: true });
-      const data = await productService.getProducts();
-      if (data) {
-        get().setProducts(data);
-      }
-    } catch (err) {
-      console.log(err);
-      set({ isError: true });
-    } finally {
-      set({
-        isLoading: false,
-      });
-    }
-  },
+  // productGetAll: async () => {
+  //   try {
+  //     set({ isLoading: true });
+  //     const data = await productService.getProducts();
+  //     if (data) {
+  //       get().setProducts(data);
+  //     }
+  //   } catch (err) {
+  //     console.log(err);
+  //     set({ isError: true });
+  //   } finally {
+  //     set({
+  //       isLoading: false,
+  //     });
+  //   }
+  // },
+  productSearch: async (query = {}) => {
+  try {
+    set({ isLoading: true, lastQuery: query });
+
+    const res = await productService.searchProducts(query);
+
+    set({
+      products: res.data,
+      pagination: res.pagination,
+    });
+
+  } catch (err) {
+    console.log(err);
+    set({ isError: true });
+  } finally {
+    set({ isLoading: false });
+  }
+},
   productGetById: async (id) => {
     try {
       set({ isLoading: true });
@@ -62,12 +84,12 @@ export const useProductStore = create((set, get) => ({
       });
     }
   },
-  productCreate: async(data) =>{
+  productCreate: async (data) => {
     try {
       set({ isLoading: true });
       await productService.createProduct(data);
       set({ isSuccess: true });
-      toast.success("Create product Success")
+      toast.success("Create product Success");
     } catch (err) {
       console.log(err);
       set({ isError: true });
@@ -77,14 +99,12 @@ export const useProductStore = create((set, get) => ({
       });
     }
   },
-  productUpdate: async (id,data) =>{
+  productUpdate: async (id, data) => {
     try {
       set({ isLoading: true });
-      const res = await productService.updateProduct(id,data);
-      console.log("data", res);
-      set({isSuccess: true})
-      toast.success("Update product Success")
-
+      await productService.updateProduct(id, data);
+      set({ isSuccess: true });
+      toast.success("Update product Success");
     } catch (err) {
       console.log(err);
       set({ isError: true });
@@ -98,8 +118,7 @@ export const useProductStore = create((set, get) => ({
     try {
       set({ isLoading: true });
       await productService.deleteProductById(id);
-      set({ isSuccess: true });
-      toast.success("Delete product Success")
+      toast.success("Delete product Success");
     } catch (err) {
       console.log(err);
       set({ isError: true });
@@ -108,26 +127,31 @@ export const useProductStore = create((set, get) => ({
     }
   },
   toggleHotProduct: async (id) => {
-    try {
-      set({ isLoading: true }); 
-      await productService.toggleHotProduct(id);
-      get().productGetAll();
-      set({ isSuccess: true });
-      toast.success("Toggle hot product Success")
-    } catch (err) {
-      console.log(err);
-      set({ isError: true });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
+  try {
+    set({ isLoading: true });
+
+    await productService.toggleHotProduct(id);
+
+    const { lastQuery } = get();
+
+    await get().productSearch(lastQuery);
+
+    toast.success("Toggle hot product Success");
+
+  } catch (err) {
+    console.log(err);
+    set({ isError: true });
+  } finally {
+    set({ isLoading: false });
+  }
+},
 
   productUploadImages: async (files) => {
     try {
       set({ isLoading: true });
       const res = await productService.uploadProductImage(files);
-      set({isSuccess: true})
-      return res
+      set({ isSuccess: true });
+      return res;
     } catch (err) {
       console.log(err);
       set({ isError: true });

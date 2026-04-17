@@ -490,51 +490,98 @@ export const applyCoupon = asyncHandler(async (req, res) => {
 // CREATE ORDER
 // ============================
 export const createOrder = asyncHandler(async (req, res) => {
-  const { COD, couponApplied } = req.body;
-  const { _id } = req.user;
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  if (!COD) {
-    res.status(400);
-    throw new Error("Create cash order failed");
-  }
+  try {
+    const { COD, couponApplied } = req.body;
+    const { _id } = req.user;
 
-  const userCart = await Cart.findOne({ orderBy: _id });
-  if (!userCart) {
-    res.status(404);
-    throw new Error("Cart not found");
-  }
+    if (!COD) {
+      res.status(400);
+      throw new Error("Create cash order failed");
+    }
 
-  const finalAmount =
-    couponApplied && userCart.totalAfterDiscount
-      ? userCart.totalAfterDiscount
-      : userCart.cartTotal;
+    const userCart = await Cart.findOne({ orderBy: _id }).session(session);
 
-  await Order.create({
-    orderBy: _id,
-    items: userCart.items,
-    totalAmount: finalAmount,
-    paymentIntent: {
-      amount: finalAmount,
-      status: "processing",
-      method: "cod",
-    },
-  });
+    if (!userCart) {
+      res.status(404);
+      throw new Error("Cart not found");
+    }
 
-  const updates = userCart.items.map((item) => ({
-    updateOne: {
-      filter: { _id: item.prodId },
-      update: {
-        $inc: {
-          stock: -item.quantity,
-          sold: +item.quantity,
+    // ✅ check stock before order
+    for (const item of userCart.items) {
+      const product = await Product.findById(item.prodId).session(session);
+
+      if (!product || product.stock < item.quantity) {
+        throw new Error(`Not enough stock for product ${product?.title}`);
+      }
+    }
+
+    // 💰 calculate final price
+    const finalAmount =
+      couponApplied && userCart.totalAfterDiscount
+        ? userCart.totalAfterDiscount
+        : userCart.cartTotal;
+
+    // ✅ create order
+    const order = await Order.create(
+      [
+        {
+          orderBy: _id,
+          items: userCart.items,
+          totalAmount: finalAmount,
+          orderStatus: "Processing",
+          paymentIntent: {
+            amount: finalAmount,
+            status: "processing",
+            method: "cod",
+          },
         },
+      ],
+      { session }
+    );
+
+    // ✅ update products (stock + sold + auto HOT)
+    const updates = userCart.items.map((item) => ({
+      updateOne: {
+        filter: { _id: item.prodId },
+        update: [
+          {
+            $set: {
+              stock: { $subtract: ["$stock", item.quantity] },
+              sold: { $add: ["$sold", item.quantity] },
+            },
+          },
+          {
+            $set: {
+              isHot: {
+                $gte: [{ $add: ["$sold", item.quantity] }, 200],
+              },
+            },
+          },
+        ],
       },
-    },
-  }));
+    }));
 
-  await Product.bulkWrite(updates);
+    await Product.bulkWrite(updates, { session });
 
-  res.status(200).json({ message: "Order created successfully" });
+    // ✅ clear cart
+    await Cart.findOneAndDelete({ orderBy: _id }).session(session);
+
+    await session.commitTransaction();
+
+    res.status(200).json({
+      message: "Order created successfully",
+      order,
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 });
 
 // ============================

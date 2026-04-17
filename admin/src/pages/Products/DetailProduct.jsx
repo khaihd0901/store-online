@@ -47,7 +47,7 @@ const DetailProduct = ({ onClose, prodId }) => {
     initialValues: {
       title: product?.title || "",
       author: product?.author || "",
-       category: product?.category?._id || "",
+      category: product?.category?._id || "",
       price: product?.price || "",
       stock: product?.stock || 0,
       description: product?.description || "",
