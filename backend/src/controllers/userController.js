@@ -14,7 +14,7 @@ import mongoose from "mongoose";
 // GET ALL USERS
 // ============================
 export const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({ isAdmin: false })
+  const users = await User.find({ isAdmin: false, isDeleted: false })
     .select("-hashedPassword");
 
   res.status(200).json(users);
@@ -73,9 +73,62 @@ export const updateUser = asyncHandler(async (req, res) => {
 });
 
 // ============================
-// DELETE USER
+// SOFT DELETE USER
 // ============================
-export const deleteUser = asyncHandler(async (req, res) => {
+export const softDeleteUser = asyncHandler(async (req, res) => {
+  const user = await User.findByIdAndUpdate(
+    req.params.id,
+    {
+      isLocked: true,
+      isDeleted: true,
+      deletedAt: new Date(),
+    },
+    { new: true }
+  );
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  res.status(200).json({ message: "User deleted (soft)", user });
+});
+
+// ============================
+// RESTORE USER
+// ============================
+export const restoreUser = asyncHandler(async (req, res) => {
+  const user = await User.findByIdAndUpdate(
+    req.params.id,
+    {
+      isLocked:false,
+      isDeleted: false,
+      deletedAt: null,
+    },
+    { new: true }
+  );
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  res.status(200).json({ message: "User restored", user });
+});
+
+// ============================
+// GET DELETED USERS (ADMIN)
+// ============================
+export const getDeletedUsers = asyncHandler(async (req, res) => {
+  const users = await User.find({ isDeleted: true });
+
+  res.status(200).json(users);
+});
+
+// ============================
+// PERMANENT DELETE (DANGER)
+// ============================
+export const hardDeleteUser = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndDelete(req.params.id);
 
   if (!user) {
@@ -83,10 +136,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  res.status(200).json({
-    success: true,
-    message: "User deleted successfully",
-  });
+  res.status(200).json({ message: "User permanently deleted" });
 });
 // ============================
 // LOCK USER

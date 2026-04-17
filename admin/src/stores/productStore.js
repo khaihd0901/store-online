@@ -107,6 +107,21 @@ export const useProductStore = create((set, get) => ({
       set({ isLoading: false });
     }
   },
+  toggleHotProduct: async (id) => {
+    try {
+      set({ isLoading: true }); 
+      await productService.toggleHotProduct(id);
+      get().productGetAll();
+      set({ isSuccess: true });
+      toast.success("Toggle hot product Success")
+    } catch (err) {
+      console.log(err);
+      set({ isError: true });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
   productUploadImages: async (files) => {
     try {
       set({ isLoading: true });

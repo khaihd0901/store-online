@@ -34,6 +34,10 @@ const deleteProductById = async (id) => {
   return res.data;
 };
 
+const toggleHotProduct = async (id) => {
+  const res = await api.put(`product/toggle-hot/${id}`);
+  return res.data;
+};
 const productService = {
   getProducts,
   createProduct,
@@ -41,6 +45,7 @@ const productService = {
   updateProduct,
   getProductById,
   deleteProductById,
+  toggleHotProduct
 };
 
 export default productService;

@@ -1,5 +1,5 @@
 import express from 'express'
-import { getUsers,getUserById, updateUser, deleteUser,updatePassword, forgotPasswordOTP, resetPassword, getWishlist, userCart, getUserCart, emptyCart, applyCoupon, createOrder, getAllOrders, getOrderbyUser, authMe, verifyOTP, addToWishlist, removeFromWishlist, toggleUserLock } from '../controllers/userController.js';
+import { getUsers,getUserById, updateUser,updatePassword, forgotPasswordOTP, resetPassword, getWishlist, userCart, getUserCart, emptyCart, applyCoupon, createOrder, getAllOrders, getOrderbyUser, authMe, verifyOTP, addToWishlist, removeFromWishlist, toggleUserLock, softDeleteUser, restoreUser, getDeletedUsers } from '../controllers/userController.js';
 import {protectedRoute, isAdmin} from '../middlewares/authMiddleware.js';
 
 
@@ -7,7 +7,9 @@ const router = express.Router();
 router.get('/',protectedRoute,isAdmin,getUsers);
 router.get('/me',protectedRoute, authMe);
 router.put('/update/:id',protectedRoute, updateUser);
-router.delete('/:id',protectedRoute, isAdmin, deleteUser);
+router.delete("/:id", protectedRoute, isAdmin, softDeleteUser);
+router.put("/restore/:id", protectedRoute, isAdmin, restoreUser);
+router.get("/deleted/all", protectedRoute, isAdmin, getDeletedUsers);
 router.put("/toggle-lock/:id", protectedRoute, isAdmin, toggleUserLock);
 router.put('/password',protectedRoute, updatePassword);
 router.post('/forgot-password', forgotPasswordOTP);

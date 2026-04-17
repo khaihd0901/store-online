@@ -30,6 +30,7 @@ const Categories = () => {
   for (let i = 0; i < categories?.length; i++) {
     data.push({
       key: i + 1,
+      id: categories[i]._id,
       name: categories[i].categoryName,
       books: categories[i]?.books.length || 0,
     });

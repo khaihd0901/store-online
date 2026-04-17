@@ -8,6 +8,7 @@ import {
   uploadProductImages,
   deleteProductImage,
   searchProducts,
+  toggleHotProduct,
 } from "../controllers/productController.js";
 import { protectedRoute, isAdmin } from "../middlewares/authMiddleware.js";
 import { productImageReSize, uploadPhoto } from "../middlewares/uploadImage.js";
@@ -18,6 +19,7 @@ router.post("/create-product", protectedRoute, isAdmin, createProduct);
 router.get("/", getProducts);
 router.get("/search", searchProducts);
 router.put("/update/:id", protectedRoute, isAdmin, updateProduct);
+router.put("/toggle-hot/:id", protectedRoute, isAdmin,toggleHotProduct);
 router.delete("/:id", protectedRoute, isAdmin, deleteProduct);
 router.put(
   "/upload",
