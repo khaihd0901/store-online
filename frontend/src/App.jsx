@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Profile from "./pages/Profile.jsx";
 import AuthRoute from "./components/AuthRoute.jsx";
+import ShopPage from "./pages/ShopPage.jsx";
 function App() {
   return (
     <BrowserRouter>
@@ -17,8 +18,9 @@ function App() {
           
           <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
           <Route path="/register" element={<AuthRoute><Register /></AuthRoute>} />
+          <Route path="shop" element={<ShopPage />} />
           {/* <Route path="/products" element={<OurShop />} />
-        <Route path="/products/:id" element={<ProductDetail />} /> */}
+          <Route path="/products/:id" element={<ProductDetail />} /> */}
 
           {/* private route */}
           <Route element={<ProtectedRoute />}>
