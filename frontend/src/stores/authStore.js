@@ -11,6 +11,7 @@ export const useAuthStore = create(
       isLoading: false,
       isSuccess: false,
       isError: false,
+      message: "",
 
       setAccessToken: (token) => {
         set({ accessToken: token });
@@ -23,6 +24,7 @@ export const useAuthStore = create(
           isLoading: false,
           isSuccess: false,
           isError: false,
+          message: "",
         });
       },
 
@@ -30,9 +32,10 @@ export const useAuthStore = create(
         try {
           set({ isLoading: true, isError: false });
           await authService.authSignUp(data);
+          set({isLoading: false });
           toast.success("Sign Up Success!");
         } catch (err) {
-          console.log(err)
+          console.log(err);
           set({ isError: true });
         } finally {
           set({ isLoading: false });
@@ -64,7 +67,7 @@ export const useAuthStore = create(
           await authService.authSignOut();
           toast.success("Sign Out Success!");
         } catch (err) {
-          console.log(err)
+          console.log(err);
           toast.error("Logout failed");
         }
       },
@@ -75,7 +78,7 @@ export const useAuthStore = create(
           const user = await authService.authMe();
           set({ user });
         } catch (err) {
-          console.log(err)
+          console.log(err);
           get().clearState();
         } finally {
           set({ isLoading: false });
@@ -91,17 +94,51 @@ export const useAuthStore = create(
             await get().authMe();
           }
         } catch (err) {
-          console.log(err)
+          console.log(err);
           get().clearState();
+        }
+      },
+      authVerifyEmail: async (token) => {
+        try {
+          set({
+            isLoading: true,
+            isError: false,
+            isSuccess: false,
+            message: "",
+          });
+
+          const res = await authService.authVerifyEmail(token);
+          if (res.accessToken) {
+            get().setAccessToken(res.accessToken);
+            await get().authMe();
+          }
+          set({
+            isLoading: false,
+            isSuccess: true,
+            message: res?.message || "Email verified successfully",
+          });
+
+          toast.success(res?.message || "Email verified successfully");
+        } catch (err) {
+          const errorMsg =
+            err.response?.data?.message || "Invalid or expired token";
+
+          set({
+            isLoading: false,
+            isError: true,
+            message: errorMsg,
+          });
+
+          toast.error(errorMsg);
         }
       },
     }),
     {
-      name: "auth-storage", 
+      name: "auth-storage",
       partialize: (state) => ({
-        // accessToken: state.accessToken,
         user: state.user,
+        accessToken: state.accessToken,
       }),
-    }
-  )
+    },
+  ),
 );

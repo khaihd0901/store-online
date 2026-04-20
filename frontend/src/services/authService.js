@@ -21,7 +21,10 @@ const authRefreshToken = async () =>{
   const res = await api.post(`auth/refresh-token`)
   return res.data.accessToken
 }
-
+const authVerifyEmail = async (token) =>{
+  const res = await api.post(`auth/verify-email/${token}`)
+  return res.data
+}
 
 const authService = {
   authSignUp,
@@ -29,5 +32,6 @@ const authService = {
   authSignOut,
   authMe,
   authRefreshToken,
+  authVerifyEmail
 }
 export default authService

@@ -6,7 +6,7 @@ import { useFormik } from "formik";
 import { LogOut, PackageIcon, SettingsIcon, UserIcon } from "lucide-react";
 
 const Header = () => {
-  const { user, authSignOut, authSignUp } = useAuthStore();
+  const { user, authSignOut, authSignUp,isLoading } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -469,12 +469,17 @@ const Header = () => {
                           </div>
                         )}
                     </div>
-                    <button
-                      type="submit"
-                      className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-semibold hover:bg-red-500 transition-colors shadow-md hover:shadow-lg"
-                    >
-                      Register
-                    </button>
+<button
+  type="submit"
+  disabled={isLoading}
+  className={`w-full py-3.5 rounded-lg font-semibold transition-colors shadow-md
+    ${isLoading
+      ? "bg-gray-400 cursor-not-allowed"
+      : "bg-gray-900 text-white hover:bg-red-500 hover:shadow-lg"}
+  `}
+>
+  {isLoading ? "Registering..." : "Register"}
+</button>
                   </form>
                 ))}
             </div>

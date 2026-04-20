@@ -10,6 +10,7 @@ import WishList from "./pages/WishList.jsx";
 import Cart from "./pages/Cart.jsx";
 import ProductPage from "./pages/ProductPage.jsx";
 import About from "./pages/About.jsx";
+import VerifyEmail from "./pages/VerifyEmail.jsx";
 function App() {
   return (
     <BrowserRouter>
@@ -21,6 +22,7 @@ function App() {
           <Route path="about" element={<About />} />
 
           <Route path="/product/:id" element={<ProductPage />} />
+          <Route path="/verify-email/:token" element={<VerifyEmail />} />
           {/* <Route path="/products" element={<OurShop />} />
           <Route path="/products/:id" element={<ProductDetail />} /> */}
 
