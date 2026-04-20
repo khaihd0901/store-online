@@ -17,7 +17,7 @@ export default function Table({
     stock: { sortable: true },
     sold: { sortable: true },
     price: { sortable: true },
-    hotStatus: { sortable: "select" },
+    hotStatus: { filter: "select" },
   };
   const formatHeader = (key) =>
     key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());

@@ -11,11 +11,9 @@ const Categories = () => {
   const [categoryId, setCategoryId] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  console.log(selectedCategory)
   const addCategory = () => {
     setShowAdd(false);
-  };
-  const handleDeleteClick = (e) => {
-     setSelectedCategory(e); // store full object (id + books)
   };
 
   useEffect(() => {
@@ -28,7 +26,7 @@ const Categories = () => {
       key: i + 1,
       id: categories[i]._id,
       name: categories[i].categoryName,
-      books: categories[i]?.books.length || 0,
+      bookCount: categories[i].bookCount,
     });
   }
   const handleView = (e) => {
@@ -41,6 +39,11 @@ const Categories = () => {
     if (reload) {
       categoryGetAll();
     }
+  };
+
+  const handleDeleteClick = (e) => {
+    const cat = categories.find((c) => c._id === e.id);
+    setSelectedCategory(cat);
   };
 
   return (
@@ -74,38 +77,38 @@ const Categories = () => {
         )}
       </div>
 
-{selectedCategory && (
-  <ConfirmModal
-    open={true}
-    title={
-      selectedCategory.books > 0
-        ? "Cannot Delete Category"
-        : "Delete Category?"
-    }
-    message={
-      selectedCategory.books > 0
-        ? "This category contains products. Please move or delete them first."
-        : "This action cannot be undone."
-    }
-    confirmText={selectedCategory.books > 0 ? "OK" : "Delete"}
-    onCancel={() => setSelectedCategory(null)}
-    onConfirm={() => {
-      if (selectedCategory.books > 0) {
-        setSelectedCategory(null);
-        return;
-      }
+      {selectedCategory && (
+        <ConfirmModal
+          open={true}
+          title={
+            selectedCategory.bookCount > 0
+              ? "Cannot Delete Category"
+              : "Delete Category?"
+          }
+          message={
+            selectedCategory.bookCount > 0
+              ? "This category contains products. Please move or delete them first."
+              : "This action cannot be undone."
+          }
+          confirmText={selectedCategory.bookCount > 0 ? "OK" : "Delete"}
+          onCancel={() => setSelectedCategory(null)}
+          onConfirm={() => {
+            if (selectedCategory.bookCount > 0) {
+              setSelectedCategory(null);
+              return;
+            }
 
-      categoryDeleteById(selectedCategory.id)
-        .then(() => {
-          categoryGetAll();
-          setSelectedCategory(null);
-        })
-        .catch(() => {
-          setSelectedCategory(null);
-        });
-    }}
-  />
-)}
+            categoryDeleteById(selectedCategory._id)
+              .then(() => {
+                categoryGetAll();
+                setSelectedCategory(null);
+              })
+              .catch(() => {
+                setSelectedCategory(null);
+              });
+          }}
+        />
+      )}
     </>
   );
 };

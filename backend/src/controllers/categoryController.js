@@ -17,19 +17,25 @@ export const createCategory = asyncHandler(async (req, res) => {
 export const getCategories = asyncHandler(async (req, res) => {
   const categories = await Category.find();
 
-  if (!categories || categories.length === 0) {
-    res.status(404);
-    throw new Error("No categories found");
-  }
+  const categoriesWithCount = await Promise.all(
+    categories.map(async (cat) => {
+      const count = await Product.countDocuments({
+        category: cat._id,
+      });
 
-    res.status(200).json(categories);
+      return {
+        ...cat.toObject(),
+        bookCount: count,
+      };
+    })
+  );
+
+  res.status(200).json(categoriesWithCount);
 });
 
 // Read a single category
 export const getCategoryById = asyncHandler(async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 5;
-  const skip = (page - 1) * limit;
+  const { page = 1, limit = 10 } = req.query;
 
   const category = await Category.findById(req.params.id);
 
@@ -38,23 +44,25 @@ export const getCategoryById = asyncHandler(async (req, res) => {
     throw new Error("Category not found");
   }
 
-  const books = await Product.find({ category: req.params.id })
-    .select("title author price stock")
-    .skip(skip)
+  // 🔥 get products by category
+  const query = {
+    category: req.params.id,
+  };
+
+  const products = await Product.find(query)
+    .select("title author") // only what you need
+    .skip((page - 1) * limit)
     .limit(limit);
 
-  const totalBooks = await Product.countDocuments({
-    category: req.params.id,
-  });
+  const total = await Product.countDocuments(query);
 
   res.status(200).json({
     category,
-    books,
+    books: products,
     pagination: {
-      page,
-      limit,
-      totalBooks,
-      totalPages: Math.ceil(totalBooks / limit),
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / limit),
     },
   });
 });

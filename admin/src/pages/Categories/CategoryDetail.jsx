@@ -5,6 +5,7 @@ import * as Yup from "yup";
 import { useEffect, useState } from "react";
 import { useCategoryStore } from "../../stores/categoryStore";
 import DetailProduct from "../Products/DetailProduct";
+import { EditIcon } from "lucide-react";
 
 export default function CategoryDetail({ categoryId, onClose }) {
   const {
@@ -19,13 +20,11 @@ export default function CategoryDetail({ categoryId, onClose }) {
 
   const [productId, setProductId] = useState(null);
   const [page, setPage] = useState(1);
-console.log(page)
   useEffect(() => {
     if (categoryId) {
       categoryGetById(categoryId, page);
     }
   }, [categoryId, page]);
-  console.log(category)
   const validationSchema = Yup.object({
     categoryName: Yup.string().required("Name is required"),
   });
@@ -90,13 +89,17 @@ console.log(page)
                   {books?.map((book) => (
                     <div
                       key={book._id}
-                      className="p-3 border rounded-lg shadow-sm cursor-pointer hover:bg-gray-50"
+                      className="p-3 border rounded-lg shadow-sm cursor-pointer hover:bg-gray-50 flex justify-between items-center"
                       onClick={() => setProductId(book._id)}
                     >
+                      <div className="left">
+                        
                       <p className="font-semibold">{book.title}</p>
                       <p className="text-gray-500 text-sm">
                         {book.author}
                       </p>
+                      </div>
+                      <EditIcon/>
                     </div>
                   ))}
                 </div>
