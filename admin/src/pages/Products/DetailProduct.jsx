@@ -63,7 +63,7 @@ const DetailProduct = ({ onClose, prodId }) => {
       if (images?.length > 0) {
         uploadedImages = await productUploadImages(images);
       }
-      const res =await productUpdate({
+      await productUpdate({
         id: prodId,
         data: {
           ...values,
