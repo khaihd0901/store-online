@@ -12,7 +12,6 @@ import {
 const ACCESS_TOKEN_TTL = "15m";
 const REFRESH_TOKEN_SORT_TTL = 24 * 60 * 60 * 1000; // 1 days
 const REFRESH_TOKEN_LONG_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
-
 export const signUp = asyncHandler(async (req, res) => {
   const { email, lastName, firstName, password, confirmPassword } = req.body;
 
@@ -40,7 +39,7 @@ export const signUp = asyncHandler(async (req, res) => {
   const verifyLink = `${process.env.CLIENT_URL}/verify-email/${user.accountVerifyToken}`;
   const verifyExpireTime = user.accountVerifyExpires;
   await sendAccountVerificationEmail(email, verifyLink, verifyExpireTime);
-
+  
   res.status(201).json({
     message: "Account created. Please verify your email",
   });
