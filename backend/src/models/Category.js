@@ -8,12 +8,6 @@ const CategorySchema = mongoose.Schema(
       trim: true,
       unique: true,
     },
-    books: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Product",
-      }
-    ]
   },
 );
 const Category = mongoose.model("Category", CategorySchema);

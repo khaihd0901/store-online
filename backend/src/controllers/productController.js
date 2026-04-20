@@ -11,31 +11,28 @@ import mongoose from "mongoose";
 export const createProduct = asyncHandler(async (req, res) => {
   const { category } = req.body;
 
-  const categoryDoc = await Category.findById(category);
-  if (!categoryDoc) {
+  if (!category || category.length === 0) {
     res.status(400);
-    throw new Error("Category not found");
+    throw new Error("Product must have at least 1 category");
   }
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const product = await Product.create([req.body], { session });
-
-    await Category.findByIdAndUpdate(
-      category,
-      { $addToSet: { books: product[0]._id } }, // no duplicates
-      { session },
-    );
-    await session.commitTransaction();
-    res.status(201).json(product[0]);
-  } catch (err) {
-    await session.abortTransaction();
-    throw err;
-  } finally {
-    session.endSession();
+  if (category.length > 3) {
+    res.status(400);
+    throw new Error("Maximum 3 category allowed");
   }
+
+  const count = await Category.countDocuments({
+    _id: { $in: category },
+  });
+
+  if (count !== category.length) {
+    res.status(400);
+    throw new Error("One or more category not found");
+  }
+
+  const product = await Product.create(req.body);
+
+  res.status(201).json(product);
 });
 
 // ============================
@@ -88,6 +85,11 @@ if (req.query.sort) {
   const sortBy = req.query.sort.split(",").join(" ");
   query = query.sort(sortBy);
 }
+if (req.query.category) {
+  const category = req.query.category.split(",");
+
+  mongoQuery.category = { $in: category };
+}
 
   // pagination
   const page = Number(req.query.page) || 1;
@@ -128,7 +130,6 @@ export const getProductById = asyncHandler(async (req, res) => {
 // ============================
 export const updateProduct = asyncHandler(async (req, res) => {
   let { removedImages = [], newImages = [], ...updateData } = req.body;
-  console.log("REQ BODY:", req.body);
 
   if (!Array.isArray(removedImages)) {
     removedImages = JSON.parse(removedImages || "[]");
@@ -143,14 +144,11 @@ export const updateProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
-  // ✅ Save old references
-  const oldCategory = product.category?.toString();
-
   // ---------- IMAGE LOGIC ----------
   if (removedImages.length > 0) {
     await Promise.all(removedImages.map((id) => deleteImage(id)));
     product.images = product.images.filter(
-      (img) => !removedImages.includes(img.public_id),
+      (img) => !removedImages.includes(img.public_id)
     );
   }
 
@@ -158,37 +156,37 @@ export const updateProduct = asyncHandler(async (req, res) => {
     product.images = [...product.images, ...newImages];
   }
 
-  // ---------- UPDATE PRODUCT ----------
+  // ---------- CATEGORY VALIDATION ----------
+if (updateData.category) {
+  if (updateData.category.length === 0) {
+    res.status(400);
+    throw new Error("Product must have at least 1 category");
+  }
+
+  if (updateData.category.length > 3) {
+    res.status(400);
+    throw new Error("Maximum 3 category allowed");
+  }
+
+  const count = await Category.countDocuments({
+    _id: { $in: updateData.category },
+  });
+
+  if (count !== updateData.category.length) {
+    res.status(400);
+    throw new Error("Invalid category");
+  }
+}
+
+  // ---------- UPDATE ----------
   Object.assign(product, updateData);
 
   product.markModified("images");
+
   const saved = await product.save();
 
-  // ✅ New references
-  const newCategory = saved.category?.toString();
-
-  // ---------- CATEGORY SYNC ----------
-  if (oldCategory && newCategory && oldCategory !== newCategory) {
-    await Category.findByIdAndUpdate(oldCategory, {
-      $pull: { books: saved._id },
-    });
-
-    await Category.findByIdAndUpdate(newCategory, {
-      $addToSet: { books: saved._id },
-    });
-  }
-
-  if (!oldCategory && newCategory) {
-    await Category.findByIdAndUpdate(newCategory, {
-      $addToSet: { books: saved._id },
-    });
-  }
-console.log("OLD:", oldCategory);
-console.log("NEW:", updateData.category);
-console.log("AFTER SAVE:", newCategory);
   res.status(200).json(saved);
 });
-
 // ============================
 // DELETE PRODUCT
 // ============================
@@ -199,17 +197,14 @@ export const deleteProduct = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("Product not found");
   }
+
   const imgIds = product.images.map((img) => img.public_id);
+
   if (imgIds.length > 0) {
     await Promise.all(imgIds.map((id) => deleteImage(id)));
   }
-  await Product.findByIdAndDelete(req.params.id);
 
-  if (product.category) {
-    await Category.findByIdAndUpdate(product.category, {
-      $pull: { products: product._id },
-    });
-  }
+  await Product.findByIdAndDelete(req.params.id);
 
   res.status(200).json({ message: "Product deleted successfully" });
 });
@@ -221,7 +216,6 @@ export const getBestSellingProducts = asyncHandler(async (req, res) => {
     .sort({ sold: -1 })
     .limit(10)
     .populate("category");
-
   res.status(200).json(products);
 });
 // ============================

@@ -4,6 +4,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useCallback, useEffect, useState } from "react";
 import UploadImage from "./UploadImage";
+import MultiSelectCategory from "../../components/MultiSelectCategory";
 import { useProductStore } from "../../stores/productStore";
 import { useCategoryStore } from "../../stores/categoryStore";
 
@@ -13,17 +14,19 @@ export default function AddProductModal({ onClose }) {
   const { categoryGetAll, categories } = useCategoryStore();
 
   const [images, setImages] = useState();
-
+  const [selectedCategories, setSelectedCategories] = useState([]);
   useEffect(() => {
     categoryGetAll();
   }, []);
-
   let validationSchema = Yup.object({
     title: Yup.string().required("Product name is required"),
     author: Yup.string().required("Author is required"),
     description: Yup.string().required("Description is required"),
     price: Yup.number().required("Price is required"),
-    category: Yup.string().required("Category is required"),
+    category: Yup.array()
+      .min(1, "At least 1 category is required")
+      .max(3, "Maximum 3 categories allowed")
+      .required("Category is required"),
     stock: Yup.number().required("Stock is required"),
     publishedDate: Yup.string().required("des is required"),
   });
@@ -35,7 +38,7 @@ export default function AddProductModal({ onClose }) {
       author: "",
       description: "",
       price: "",
-      category: "",
+      category: [],
       stock: "",
       isHot: false,
       publishedDate: "",
@@ -47,6 +50,7 @@ export default function AddProductModal({ onClose }) {
         const uploaded = await productUploadImages(images);
         const payload = {
           ...values,
+          category: values.category,
           images: uploaded,
         };
         productCreate(payload);
@@ -55,6 +59,13 @@ export default function AddProductModal({ onClose }) {
       }
     },
   });
+
+  useEffect(() => {
+    formik.setFieldValue(
+      "category",
+      selectedCategories.map((c) => c._id),
+    );
+  }, [selectedCategories]);
   useCallback(() => {
     if (isSuccess) {
       onClose(true);
@@ -113,8 +124,7 @@ export default function AddProductModal({ onClose }) {
                       </div>
                     ) : null}
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="flex flex-col gap-2">
+                  {/* <div className="flex flex-col gap-2">
                       <span className="font-medium">Category</span>
                       <select
                         name="category"
@@ -137,8 +147,23 @@ export default function AddProductModal({ onClose }) {
                           {formik.errors.category}
                         </div>
                       ) : null}
-                    </div>
+                    </div> */}
+                  <div className="flex flex-col gap-2">
+                    <span className="font-medium">Categories</span>
 
+                    <MultiSelectCategory
+                      categories={categories}
+                      selected={selectedCategories}
+                      setSelected={setSelectedCategories}
+                    />
+
+                    {formik.touched.category && formik.errors.category && (
+                      <div className="text-red-500 text-sm">
+                        {formik.errors.category}
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-2">
                       <CustomerInput
                         onChange={formik.handleChange("price")}
@@ -219,7 +244,7 @@ export default function AddProductModal({ onClose }) {
                   </div>
 
                   <div className="flex flex-col gap-2">
-                      <span className="font-medium">Description</span>
+                    <span className="font-medium">Description</span>
 
                     <textarea
                       onChange={formik.handleChange("description")}

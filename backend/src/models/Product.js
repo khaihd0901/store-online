@@ -20,7 +20,12 @@ const bookSchema = new mongoose.Schema({
     required: true,
     min: 0,
   },
-  category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+  category: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+    },
+  ],
   stock: {
     type: Number,
     default: 0,

@@ -6,11 +6,12 @@ import { useCallback, useEffect, useState } from "react";
 import UploadImage from "./UploadImage";
 import { useProductStore } from "../../stores/productStore";
 import { useCategoryStore } from "../../stores/categoryStore";
+import MultiSelectCategory from "../../components/MultiSelectCategory";
 
 const DetailProduct = ({ onClose, prodId }) => {
   const [images, setImages] = useState();
   const [deletedImages, setDeletedImages] = useState();
-
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const {
     productGetById,
     product,
@@ -19,10 +20,9 @@ const DetailProduct = ({ onClose, prodId }) => {
     isSuccess,
     isLoading,
     toggleHotProduct,
-    clearState
+    clearState,
   } = useProductStore();
   const { categoryGetAll, categories } = useCategoryStore();
-
   useEffect(() => {
     categoryGetAll();
   }, []);
@@ -39,7 +39,7 @@ const DetailProduct = ({ onClose, prodId }) => {
   let validationSchema = Yup.object({
     title: Yup.string().required("Product name is required"),
     author: Yup.string().required("Author is required"),
-    category: Yup.string().required("Category is required"),
+    category: Yup.array().min(1, "At least one category is required"),
     price: Yup.number().required("Price is required"),
     stock: Yup.number().required("Stock is required"),
     description: Yup.string().required("description is required"),
@@ -49,7 +49,7 @@ const DetailProduct = ({ onClose, prodId }) => {
     initialValues: {
       title: product?.title || "",
       author: product?.author || "",
-      category: product?.category?._id || "",
+      category: product?.category?.map((c) => c._id) || [],
       price: product?.price || "",
       stock: product?.stock || 0,
       description: product?.description || "",
@@ -67,12 +67,24 @@ const DetailProduct = ({ onClose, prodId }) => {
         id: prodId,
         data: {
           ...values,
+          category: values.category,
           newImages: uploadedImages,
           removedImages: deletedImages,
         },
       });
     },
   });
+  useEffect(() => {
+    if (product?.category) {
+      setSelectedCategories(product.category);
+    }
+  }, [product]);
+  useEffect(() => {
+    formik.setFieldValue(
+      "category",
+      selectedCategories.map((c) => c._id),
+    );
+  }, [selectedCategories]);
   useEffect(() => {
     if (isSuccess) {
       clearState();
@@ -134,31 +146,22 @@ const DetailProduct = ({ onClose, prodId }) => {
                       </div>
                     ) : null}
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="flex flex-col gap-2">
-                      <span className="font-medium">Category</span>
-                      <select
-                        name="category"
-                        value={formik.values.category}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className="w-full pl-4 pr-4 py-2.5 bg-gray-100 border border-gray-300
-    rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none 
-    focus:ring-2 focus:ring-[var(--color-fdaa3d)] focus:border-transparent transition-all"
-                      >
-                        <option value="">Select category</option>
-                        {categories?.map((c, index) => (
-                          <option key={index} value={c._id}>
-                            {c.categoryName}
-                          </option>
-                        ))}
-                      </select>
-                      {formik.touched.category && formik.errors.category ? (
-                        <div className="text-red-500 text-sm">
-                          {formik.errors.category}
-                        </div>
-                      ) : null}
-                    </div>
+                  <div className="flex flex-col gap-2">
+                    <span className="font-medium">Categories</span>
+
+                    <MultiSelectCategory
+                      categories={categories}
+                      selected={selectedCategories}
+                      setSelected={setSelectedCategories}
+                    />
+
+                    {formik.errors.categories && (
+                      <div className="text-red-500 text-sm">
+                        {formik.errors.categories}
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-2">
                       <CustomerInput
                         onChange={formik.handleChange("price")}

@@ -18,7 +18,7 @@ export default function Product() {
   } = useProductStore();
   const { categoryGetAll, categories } = useCategoryStore();
   const data = useProductStore((s) => s.products);
-
+  console.log(data);
   const [prodId, setProdId] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [confirmId, setConfirmId] = useState(null);
@@ -29,7 +29,6 @@ export default function Product() {
   const [sortKey, setSortKey] = useState("createdAt");
   const [sort, setSort] = useState("desc");
   const [filters, setFilters] = useState({});
-  console.log(sort);
   const fetchProducts = useCallback(async () => {
     const params = {
       page,
@@ -53,7 +52,21 @@ export default function Product() {
     id: item._id,
     name: item.title,
     author: item.author,
-    category: item.category?.categoryName || "-",
+    category:
+      item.category && item.category.length > 0 ? (
+        <div className="flex flex-wrap gap-1 justify-center">
+          {item.category.map((c) => (
+            <span
+              key={c._id}
+              className="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs"
+            >
+              {c.categoryName}
+            </span>
+          ))}
+        </div>
+      ) : (
+        "-"
+      ),
     stock: item.stock,
     sold: item.sold,
     hotStatus: item.isHot ? (

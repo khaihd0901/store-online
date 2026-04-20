@@ -26,8 +26,8 @@ export const useCategoryStore = create((set, get) => ({
   clearState: () => {
     set({
       categories: [],
+  books: [],
       pagination: {},
-      books: [],
       category: null,
       isLoading: false,
       isSuccess: false,
@@ -58,9 +58,8 @@ export const useCategoryStore = create((set, get) => ({
         get().setCategory(data);
       }
         set({
-        books: data.books,
-        pagination: data.pagination,
-        isLoading: false,
+      books: data.books,
+      pagination: data.pagination,
       });
     } catch (err) {
       console.log(err);
