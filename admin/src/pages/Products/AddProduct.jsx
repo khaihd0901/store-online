@@ -67,7 +67,7 @@ export default function AddProductModal({ onClose }) {
   };
 
   return (
-    <Modal onClose={onClose} onSubmit={formik.handleSubmit}>
+    <Modal onClose={onClose}>
       <div className="relative">
         <div className="p-4 bg-gray-100 min-w-5xl">
           <div className="grid grid-cols-12 gap-4">
@@ -254,7 +254,8 @@ export default function AddProductModal({ onClose }) {
           </button>
 
           <button
-            type="submit"
+            type="button"
+            onClick={formik.handleSubmit}
             disabled={isLoading}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
           >
