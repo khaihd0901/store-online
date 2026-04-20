@@ -4,7 +4,9 @@
 @tailwind utilities;
 
 @layer base {
-
+button{
+  cursor: pointer;
+}
   body {
   }
 

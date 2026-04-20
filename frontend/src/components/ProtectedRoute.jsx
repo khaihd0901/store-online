@@ -25,7 +25,7 @@ const ProtectedRoute = () => {
     return <div className="flex h-screen items-center justify-center">Loading ...</div>
   }
   if (!accessToken) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
   return <Outlet> </Outlet>;
 };
