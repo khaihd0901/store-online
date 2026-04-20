@@ -6,10 +6,6 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Profile from "./pages/Profile.jsx";
 import Order from "./pages/Order.jsx"
 import ShopPage from "./pages/ShopPage.jsx";
-import About from "./pages/About.jsx";
-import WishList from "./pages/WishList.jsx";
-import Cart from "./pages/Cart.jsx";
-
 function App() {
   return (
     <BrowserRouter>
@@ -18,7 +14,6 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="shop" element={<ShopPage />} />
-          <Route path="about" element={<About />} />
           {/* <Route path="/products" element={<OurShop />} />
           <Route path="/products/:id" element={<ProductDetail />} /> */}
 

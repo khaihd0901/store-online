@@ -69,6 +69,23 @@ const Header = () => {
   return (
     <>
       <header id="header" className="site-header sticky top-0 z-40 bg-white">
+        {/* Top Info Bar */}
+        <div className="top-info border-b hidden md:block">
+          <div className="container mx-auto">
+            <div className="flex flex-wrap">
+              <div className="md:w-1/3 w-full">
+                <p className="text-sm my-2 text-center">Need any help? Call us <a href="#" className="hover:text-red-500">112233344455</a></p>
+              </div>
+              <div className="md:w-1/3 w-full border-l border-r">
+                <p className="text-sm my-2 text-center">Summer sale discount off 60%! <Link className="underline hover:text-red-500" to="/shop">Shop Now</Link></p>
+              </div>
+              <div className="md:w-1/3 w-full">
+                <p className="text-sm my-2 text-center">2-3 business days delivery & free returns</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Main Navigation */}
         <nav
           id="header-nav"

@@ -25,8 +25,9 @@ const Features = () => {
   ];
 
   return (
-    <section id="company-services" className="pt-16 pb-8 border-b border-gray-100 bg-white">
-      <div className="container mx-auto px-4 md:px-10">
+    <section id="company-services" className="pt-16 pb-8 bg-white">
+      {/* ĐÃ SỬA: Xóa md:px-10 để lề căn chuẩn với Logo trên Header */}
+      <div className="container mx-auto px-4">
         <div className="flex flex-wrap -mx-2">
           
           {services.map((service, index) => (

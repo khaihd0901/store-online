@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router';
+import { Link } from 'react-router'; 
 
 const LimitedOffer = () => {
   // Logic đếm ngược thời gian thực
@@ -28,7 +28,7 @@ const LimitedOffer = () => {
   }, []);
 
   return (
-    <section className="py-20 md:py-28 bg-gray-50 border-b border-gray-100">
+    <section className="py-20 md:py-28 border-b border-gray-100 bg-cover bg-no-repeat bg-center bg-[url('/images/banner-image-bg-1.jpg')]">
       <div className="container mx-auto px-4 md:px-10 h-full">
         <div className="flex flex-col md:flex-row items-center h-full">
           
@@ -69,7 +69,7 @@ const LimitedOffer = () => {
               </div>
             </div>
 
-            <Link to="/shop" className="inline-block px-10 py-4 bg-gray-900 text-white rounded font-medium hover:bg-red-500 transition-colors shadow-lg transform hover:-translate-y-1">
+            <Link to="/shop" className="inline-block px-10 py-4 bg-red-400 text-white rounded font-medium hover:bg-red-500 transition-colors shadow-lg transform hover:-translate-y-1">
               Shop Collection
             </Link>
           </div>
