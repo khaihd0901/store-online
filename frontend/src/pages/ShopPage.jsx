@@ -2,11 +2,36 @@ import React from 'react';
 import { Link } from 'react-router'; // Lưu ý: Thường dùng react-router-dom
 // ĐÃ SỬA 1: Import component ProductCard vào ShopPage
 import ProductCard from '../components/ProductCard'; 
-
+import { useUserStore } from '@/stores/userStore';
 const ShopPage = () => {
+const {userAddToWishlist} = useUserStore();
   const dummyProducts = [
-    { id: 1, title: 'Psychology of Money', author: 'Morgan Housel', price: '$870', image: '/images/product-item1.png', badge: '10% off' },
-    { id: 2, title: 'The Two Towers', author: 'J.R.R Tolkien', price: '$870', image: '/images/product-item2.png', badge: '' },
+      {
+        id: "69e64d04bf57b47c616f0b7f",
+    "title": "The Avengers",
+    "author": "Stan Lee",
+    "description": "Survival in extreme conditions.",
+    "price": 27,
+    "category": ["69e64b9ddde95a6587f92da2"],
+    "stock": 140,
+    "sold": 23,
+    "isHot": false,
+    "images": [{ "url": "https://res.cloudinary.com/dxarh43ta/image/upload/v1776700667/ix8nzlofx9hccoz2o1og.jpg","asset_id": "371769a8e262e520c1c6cadbbda027c8","public_id": "ix8nzlofx9hccoz2o1og"}],
+    "publishedDate": "2023-08-08"
+  },
+  {
+    id :"69e6518719245c6d1ea5a2b4",
+    "title": "Meuseum Studies",
+    "author": "Sharon Macdonald",
+    "description": "A new power rises.",
+    "price": 31,
+    "category": ["69e64b83dde95a6587f92d9f","69e64b93dde95a6587f92da1"],
+    "stock": 100,
+    "sold": 29,
+    "isHot": true,
+    "images": [{ "url": "https://res.cloudinary.com/dxarh43ta/image/upload/v1776701823/rv3pdrrg5laspzvmukii.jpg","asset_id": "37298ce0b83471205260c2a262413b8f","public_id": "rv3pdrrg5laspzvmukii"}],
+    "publishedDate": "2025-04-04"
+  },
     { id: 3, title: 'Goal Planner', author: 'Lauren Asher', price: '$870', image: '/images/product-item3.png', badge: '' },
     { id: 4, title: 'House of Sky Breath', author: 'Lauren Asher', price: '$870', image: '/images/product-item4.png', badge: '' },
     { id: 5, title: 'Heartland Stars', author: 'Lauren Asher', price: '$870', image: '/images/product-item5.png', badge: '' },
@@ -103,6 +128,7 @@ const ShopPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-12">
               {dummyProducts.map((product) => (
                 <ProductCard 
+                  onClickWishlist={() => userAddToWishlist(product.id)} // Thêm sự kiện click vào wishlist
                   key={product.id}
                   id={product.id} // Truyền ID sang để Link biết đường chuyển trang
                   image={product.image}

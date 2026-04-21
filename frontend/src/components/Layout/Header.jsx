@@ -18,7 +18,7 @@ const Header = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const [registerSuccess, setRegisterSuccess] = useState("");
   const { authLogin } = useAuthStore();
-  const { userForgotPasswordOTP, userVerifyOTP, userResetPassword } =
+  const { userForgotPasswordOTP, userVerifyOTP, userResetPassword, wishlist, userGetWishlist } =
     useUserStore();
 
   let validationSchema = Yup.object({
@@ -38,6 +38,7 @@ const Header = () => {
       try{
       const res = await authLogin(values);
       if(res){
+      await userGetWishlist();
       window.location.reload();
       }
       }catch(err){
@@ -199,7 +200,7 @@ const Header = () => {
                   <svg className="w-5 h-5">
                     <use xlinkHref="#heart"></use>
                   </svg>
-                  <span className="text-xs font-bold ml-1">(2)</span>
+                  <span className="text-xs font-bold ml-1">({wishlist.length})</span>
                 </Link>
                 <Link
                   to="/cart"

@@ -6,17 +6,43 @@ const userForgotPasswordOTP = async (email) =>{
 }
 
 const userVerifyOTP = async (data) =>{
-    const res = api.post(`user/verify-otp`, data)
+    const res = await api.post(`user/verify-otp`, data)
     return res.data
 }
 const userResetPassword = async (data) =>{
-    const res = api.post(`user/reset-password`, data)
+    const res = await api.post(`user/reset-password`, data)
+    return res.data
+}
+const userGetWishlist = async () =>{
+    const res = await api.get(`user/wishlist`)
+    return res.data.wishList
+}
+const userAddToWishlist = async (productId) =>{
+    console.log(productId)
+    const res = await api.post(`user/add-wishlist`, {prodId : productId})
+    return res.data
+}
+const userRemoveFromWishlist = async (productId) =>{
+    const res = await api.put(`user/remove-wishlist`, { prodId: productId })
+    return res.data
+}
+const userAddToCart = async (cartData) =>{
+    const res = await api.post(`user/cart`, cartData)
+    return res.data
+}
+const userGetCart = async () =>{
+    const res = await api.get(`user/get-cart`)
     return res.data
 }
 const userService = {
     userForgotPasswordOTP,
     userVerifyOTP,
-    userResetPassword
+    userResetPassword,
+    userAddToWishlist,
+    userRemoveFromWishlist,
+    userGetWishlist,
+    userAddToCart,
+    userGetCart
 }
 
 export default userService
