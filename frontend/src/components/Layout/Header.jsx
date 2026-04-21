@@ -4,15 +4,22 @@ import { Link } from "react-router";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import { LogOut, PackageIcon, SettingsIcon, UserIcon } from "lucide-react";
+import { useUserStore } from "@/stores/userStore";
+import { toast } from "sonner";
 
 const Header = () => {
-  const { user, authSignOut, authSignUp,isLoading } = useAuthStore();
+  const { user, authSignOut, authSignUp, isLoading } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [step, setStep] = useState(1);
+  const [email, setEmail] = useState("");
   const [activeTab, setActiveTab] = useState("signin");
   const [registerSuccess, setRegisterSuccess] = useState("");
   const { authLogin } = useAuthStore();
+  const { userForgotPasswordOTP, userVerifyOTP, userResetPassword } =
+    useUserStore();
 
   let validationSchema = Yup.object({
     email: Yup.string()
@@ -28,8 +35,14 @@ const Header = () => {
     },
     validationSchema: validationSchema,
     onSubmit: async (values) => {
-      await authLogin(values);
+      try{
+      const res = await authLogin(values);
+      if(res){
       window.location.reload();
+      }
+      }catch(err){
+        toast.error(err)
+      }
     },
   });
 
@@ -66,10 +79,52 @@ const Header = () => {
       }
     },
   });
+
+  const forgotFormik = useFormik({
+    initialValues: { email: "" },
+    onSubmit: async (values) => {
+      await userForgotPasswordOTP(values);
+      setEmail(values.email);
+      setStep(2);
+    },
+  });
+
+  const otpFormik = useFormik({
+    initialValues: { OTP: "" },
+    onSubmit: async (values) => {
+      await userVerifyOTP({
+        email,
+        OTP: values.OTP,
+      });
+      setStep(3);
+    },
+  });
+
+  const resetFormik = useFormik({
+    initialValues: {
+      password: "",
+      confirmPassword: "",
+    },
+    validationSchema: Yup.object({
+      password: Yup.string().min(6).required(),
+      confirmPassword: Yup.string()
+        .oneOf([Yup.ref("password")], "Passwords must match")
+        .required(),
+    }),
+    onSubmit: async (values) => {
+      await userResetPassword({
+        email,
+        OTP: otpFormik.values.OTP,
+        password: values.password,
+      });
+
+      setShowForgot(false);
+      setStep(1);
+    },
+  });
   return (
     <>
       <header id="header" className="site-header sticky top-0 z-40 bg-white">
-
         {/* Main Navigation */}
         <nav
           id="header-nav"
@@ -155,7 +210,7 @@ const Header = () => {
                   </svg>
                   <span className="text-xs font-bold ml-1">(2)</span>
                 </Link>
-                
+
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -284,69 +339,200 @@ const Header = () => {
               </nav>
 
               {activeTab === "signin" && (
-                <form
-                  className="animate-fade-in"
-                  onSubmit={formik.handleSubmit}
-                >
-                  <div className="mb-5">
-                    <label className="block mb-2 text-sm font-medium text-gray-700">
-                      Username or email address *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Enter your email"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all"
-                      {...formik.getFieldProps("email")}
-                    />
-                    {formik.touched.email && formik.errors.email ? (
-                      <div className="text-red-500 text-sm">
-                        {formik.errors.email}
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="mb-5">
-                    <label className="block mb-2 text-sm font-medium text-gray-700">
-                      Password *
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="Enter your password"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all"
-                      {...formik.getFieldProps("password")}
-                    />
-                    {formik.touched.password && formik.errors.password ? (
-                      <div className="text-red-500 text-sm">
-                        {formik.errors.password}
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="flex items-center justify-between mb-6">
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="rememberMe"
-                        checked={formik.values.rememberMe}
-                        onChange={formik.handleChange}
-                        className="w-4 h-4 text-red-500 border-gray-300 rounded focus:ring-red-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-600">
-                        Remember me
-                      </span>
-                    </label>
-                    <a
-                      href="#"
-                      className="text-sm font-semibold text-red-500 hover:text-red-600"
+                <>
+                  {!showForgot ? (
+                    // 🔐 LOGIN FORM
+                    <form
+                      onSubmit={formik.handleSubmit}
+                      className="animate-fade-in"
                     >
-                      Forgot Password?
-                    </a>
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-semibold hover:bg-red-500 transition-colors shadow-md hover:shadow-lg"
-                  >
-                    Login
-                  </button>
-                </form>
+                      <div className="mb-5">
+                        {" "}
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          {" "}
+                          Username or email address *{" "}
+                        </label>{" "}
+                        <input
+                          type="text"
+                          placeholder="Enter your email"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all"
+                          {...formik.getFieldProps("email")}
+                        />{" "}
+                        {formik.touched.email && formik.errors.email ? (
+                          <div className="text-red-500 text-sm">
+                            {" "}
+                            {formik.errors.email}{" "}
+                          </div>
+                        ) : null}{" "}
+                      </div>{" "}
+                      <div className="mb-5">
+                        {" "}
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          {" "}
+                          Password *{" "}
+                        </label>{" "}
+                        <input
+                          type="password"
+                          placeholder="Enter your password"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all"
+                          {...formik.getFieldProps("password")}
+                        />{" "}
+                        {formik.touched.password && formik.errors.password ? (
+                          <div className="text-red-500 text-sm">
+                            {" "}
+                            {formik.errors.password}{" "}
+                          </div>
+                        ) : null}{" "}
+                      </div>
+                      <div className="flex items-center justify-between mb-6">
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            name="rememberMe"
+                            checked={formik.values.rememberMe}
+                            onChange={formik.handleChange}
+                            className="w-4 h-4 text-red-500 border-gray-300 rounded"
+                          />
+                          <span className="ml-2 text-sm text-gray-600">
+                            Remember me
+                          </span>
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => setShowForgot(true)}
+                          className="text-sm font-semibold text-red-500 hover:text-red-600"
+                        >
+                          Forgot Password?
+                        </button>
+                      </div>
+                      <button
+                        type="submit"
+                        className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-semibold hover:bg-red-500"
+                      >
+                        Login
+                      </button>
+                    </form>
+                  ) : (
+<div className="animate-fade-in">
+  {/* Title */}
+  <h3 className="text-lg font-semibold text-center mb-2">
+    {step === 1 && "Reset your password"}
+    {step === 2 && "Enter OTP"}
+    {step === 3 && "Create new password"}
+  </h3>
+
+  <p className="text-sm text-gray-500 text-center mb-6">
+    {step === 1 && "Enter your email to receive a verification code"}
+    {step === 2 && `We sent a code to ${email}`}
+    {step === 3 && "Set your new password below"}
+  </p>
+
+  {/* STEP 1 */}
+  {step === 1 && (
+    <form onSubmit={forgotFormik.handleSubmit}>
+      <div className="mb-5">
+        <label className="block mb-2 text-sm font-medium text-gray-700">
+          Email address
+        </label>
+        <input
+          type="email"
+          placeholder="Enter your email"
+          {...forgotFormik.getFieldProps("email")}
+          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all"
+        />
+      </div>
+
+      <button
+        type="submit"
+        className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-semibold hover:bg-red-500 transition"
+      >
+        Send OTP
+      </button>
+    </form>
+  )}
+
+  {/* STEP 2 */}
+  {step === 2 && (
+    <form onSubmit={otpFormik.handleSubmit}>
+      <div className="mb-5">
+        <label className="block mb-2 text-sm font-medium text-gray-700">
+          Verification Code
+        </label>
+        <input
+          type="text"
+          placeholder="Enter OTP"
+          {...otpFormik.getFieldProps("OTP")}
+          className="w-full p-3 border border-gray-300 rounded-lg text-center tracking-widest text-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all"
+        />
+      </div>
+
+      <button
+        type="submit"
+        className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-semibold hover:bg-red-500 transition"
+      >
+        Verify OTP
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setStep(1)}
+        className="mt-3 w-full text-sm text-gray-500 hover:text-red-500"
+      >
+        Resend OTP
+      </button>
+    </form>
+  )}
+
+  {/* STEP 3 */}
+  {step === 3 && (
+    <form onSubmit={resetFormik.handleSubmit}>
+      <div className="mb-5">
+        <label className="block mb-2 text-sm font-medium text-gray-700">
+          New Password
+        </label>
+        <input
+          type="password"
+          placeholder="Enter new password"
+          {...resetFormik.getFieldProps("password")}
+          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all"
+        />
+      </div>
+
+      <div className="mb-5">
+        <label className="block mb-2 text-sm font-medium text-gray-700">
+          Confirm Password
+        </label>
+        <input
+          type="password"
+          placeholder="Confirm password"
+          {...resetFormik.getFieldProps("confirmPassword")}
+          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all"
+        />
+      </div>
+
+      <button
+        type="submit"
+        className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-semibold hover:bg-red-500 transition"
+      >
+        Reset Password
+      </button>
+    </form>
+  )}
+
+  {/* BACK BUTTON */}
+  <button
+    onClick={() => {
+      setShowForgot(false);
+      setStep(1);
+    }}
+    className="mt-6 w-full text-sm text-gray-500 hover:text-red-500"
+  >
+    ← Back to Login
+  </button>
+</div>
+                  )}
+                </>
               )}
 
               {activeTab === "register" &&
@@ -469,17 +655,19 @@ const Header = () => {
                           </div>
                         )}
                     </div>
-<button
-  type="submit"
-  disabled={isLoading}
-  className={`w-full py-3.5 rounded-lg font-semibold transition-colors shadow-md
-    ${isLoading
-      ? "bg-gray-400 cursor-not-allowed"
-      : "bg-gray-900 text-white hover:bg-red-500 hover:shadow-lg"}
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className={`w-full py-3.5 rounded-lg font-semibold transition-colors shadow-md
+    ${
+      isLoading
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-gray-900 text-white hover:bg-red-500 hover:shadow-lg"
+    }
   `}
->
-  {isLoading ? "Registering..." : "Register"}
-</button>
+                    >
+                      {isLoading ? "Registering..." : "Register"}
+                    </button>
                   </form>
                 ))}
             </div>
@@ -500,12 +688,18 @@ const Header = () => {
 
             {/* Menu Items */}
             <div className="space-y-3">
-              <Link to={'/profile'} className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition flex items-center gap-2">
+              <Link
+                to={"/profile"}
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition flex items-center gap-2"
+              >
                 <UserIcon className="" size={22} />
                 <span>Profile</span>
               </Link>
 
-              <Link to={"/orders"} className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition flex items-center gap-2">
+              <Link
+                to={"/orders"}
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition flex items-center gap-2"
+              >
                 <PackageIcon className="" size={22} />
                 <span> Orders</span>
               </Link>

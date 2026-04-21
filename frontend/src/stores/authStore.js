@@ -118,7 +118,6 @@ export const useAuthStore = create(
             message: res?.message || "Email verified successfully",
           });
 
-          toast.success(res?.message || "Email verified successfully");
         } catch (err) {
           const errorMsg =
             err.response?.data?.message || "Invalid or expired token";
