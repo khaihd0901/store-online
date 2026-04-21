@@ -265,21 +265,28 @@ export const addToWishlist = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   const { prodId } = req.body;
 
+  if (!prodId) {
+    return res.status(400).json({
+      success: false,
+      message: "Product ID required",
+    });
+  }
   const user = await User.findById(_id);
 
-  const alreadyAdded = user.wishList.some(
-    (id) => id.toString() === prodId
-  );
-
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found",
+    });
+  }
+  const alreadyAdded = user.wishList.some(id => id.equals(prodId));
   const update = alreadyAdded
     ? { $pull: { wishList: prodId } }
-    : { $addToSet: { wishList: prodId } }; // prevents duplicates
+    : { $addToSet: { wishList: prodId } };
 
-  const updatedUser = await User.findByIdAndUpdate(
-    _id,
-    update,
-    { new: true }
-  ).populate("wishList");
+  const updatedUser = await User.findByIdAndUpdate(_id, update, {
+    new: true,
+  }).populate("wishList");
 
   res.status(200).json({
     success: true,
@@ -292,8 +299,8 @@ export const addToWishlist = asyncHandler(async (req, res) => {
 // ============================
 export const removeFromWishlist = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  const { prodId } = req.body; // or req.body
-
+  const  {prodId}  = req.body; // or req.body
+console.log({prodId})
   // Validate product ID
   if (!mongoose.Types.ObjectId.isValid(prodId)) {
     return res.status(400).json({ message: "Invalid product ID" });

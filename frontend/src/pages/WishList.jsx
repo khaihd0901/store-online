@@ -1,27 +1,14 @@
-import { useState } from "react";
-
-const wishlistMock = [
-  {
-    id: 1,
-    title: "Atomic Habits",
-    author: "James Clear",
-    price: "$18.00",
-    image: "https://m.media-amazon.com/images/I/81F90H7hnML.jpg",
-  },
-  {
-    id: 2,
-    title: "Deep Work",
-    author: "Cal Newport",
-    price: "$15.00",
-    image: "https://m.media-amazon.com/images/I/71g2ednj0JL.jpg",
-  },
-];
+import { useUserStore } from "@/stores/userStore";
+import { useEffect } from "react";
 
 export default function WishList() {
-  const [wishlist, setWishlist] = useState(wishlistMock);
-
-  const removeItem = (id) => {
-    setWishlist((prev) => prev.filter((item) => item.id !== id));
+  const { userGetWishlist,userRemoveFromWishlist,wishlist } = useUserStore();
+  useEffect(()=>{
+    userGetWishlist();
+  }, []);
+  const removeItem = async (id) => {
+    await userRemoveFromWishlist(id);
+    await userGetWishlist();
   };
 
   return (
@@ -34,7 +21,7 @@ export default function WishList() {
         </h2>
 
         {/* Empty State */}
-        {wishlist.length === 0 && (
+        {wishlist?.length === 0 && (
           <div className="bg-white rounded-2xl shadow p-10 text-center">
             <p className="text-gray-500 mb-4">
               Your wishlist is empty.
@@ -46,11 +33,11 @@ export default function WishList() {
         )}
 
         {/* Wishlist Items */}
-        {wishlist.length > 0 && (
+        {wishlist?.length > 0 && (
           <div className="grid md:grid-cols-4 sm:grid-cols-2 gap-6">
             {wishlist.map((item) => (
               <div
-                key={item.id}
+                key={item._id}
                 className="bg-white rounded-2xl shadow hover:shadow-md transition p-4"
               >
                 <img
@@ -74,7 +61,8 @@ export default function WishList() {
                     Add to Cart
                   </button>
                   <button
-                    onClick={() => removeItem(item.id)}
+                  type="button"
+                    onClick={() => removeItem(item._id)}
                     className="px-3 py-2 border rounded-lg text-red-500 hover:bg-red-50"
                   >
                     ✕

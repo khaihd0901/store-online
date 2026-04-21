@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router'; 
 
-const ProductCard = ({ id, image, title, author, price }) => {
+const ProductCard = ({ id, image, title, author, price, onClickWishlist }) => {
   return (
-    <Link to={`/product/${id}`} className="block group relative p-6 border border-gray-100 rounded-xl hover:shadow-xl transition-shadow duration-300 bg-white h-full cursor-pointer">
+    <>
+    <div to={`/product/${id}`} className="block group relative p-6 border border-gray-100 rounded-xl hover:shadow-xl transition-shadow duration-300 bg-white h-full cursor-pointer">
       
       <div className="flex justify-center mb-4">
         <img src={image} className="w-full max-w-[200px] h-[280px] object-contain shadow-sm group-hover:scale-105 transition-transform duration-500" alt={title} />
@@ -28,11 +29,12 @@ const ProductCard = ({ id, image, title, author, price }) => {
         <button type="button" onClick={(e) => { e.preventDefault(); }} className="p-3 bg-gray-900 text-white rounded-full hover:bg-red-500 transition-colors shadow-lg transform translate-y-2 group-hover:translate-y-0">
           <svg className="w-5 h-5"><use xlinkHref="#cart"></use></svg>
         </button>
-        <button type="button" onClick={(e) => { e.preventDefault(); }} className="p-3 bg-gray-900 text-white rounded-full hover:bg-red-500 transition-colors shadow-lg transform translate-y-2 group-hover:translate-y-0">
+        <button type="button" onClick={onClickWishlist} className="p-3 bg-gray-900 text-white rounded-full hover:bg-red-500 transition-colors shadow-lg transform translate-y-2 group-hover:translate-y-0">
           <svg className="w-5 h-5"><use xlinkHref="#heart"></use></svg>
         </button>
       </div>
-    </Link>
+    </div>
+    </>
   );
 };
 
