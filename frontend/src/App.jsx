@@ -11,6 +11,8 @@ import Cart from "./pages/Cart.jsx";
 import ProductPage from "./pages/ProductPage.jsx";
 import About from "./pages/About.jsx";
 import VerifyEmail from "./pages/VerifyEmail.jsx";
+import Contact from "./pages/Contact.jsx";
+
 import { useUserStore } from "./stores/userStore.js";
 import { useEffect } from "react";
 import { useAuthStore } from "./stores/authStore.js";
@@ -32,6 +34,8 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="shop" element={<ShopPage />} />
           <Route path="about" element={<About />} />
+          <Route path="contact" element={<Contact />} />
+
 
           <Route path="/product/:id" element={<ProductPage />} />
           <Route path="/verify-email/:token" element={<VerifyEmail />} />
