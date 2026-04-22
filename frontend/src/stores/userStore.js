@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import userService from "@/services/userService";
+import { toast } from "sonner";
 
 export const useUserStore = create((set,get) => ({
   isLoading: false,
@@ -8,12 +9,17 @@ export const useUserStore = create((set,get) => ({
   step: 1,
   email: "",
   wishlist: [],
+  carts : [],
+  cartCount: 0,
+  wishlistCount: 0,
+
   clearState: () => {
     set({
       step: 1,
       email: "",
       error: null,
       success: null,
+      cart: [],
       wishlist: [],
     });
   },
@@ -81,6 +87,7 @@ export const useUserStore = create((set,get) => ({
       set({
         isLoading: false,
         wishlist: res,
+        wishlistCount: res.length,
       });
     } catch (err) {
       set({
@@ -89,21 +96,25 @@ export const useUserStore = create((set,get) => ({
       });
     }
   },
-  userAddToWishlist: async (productId) => {
-    try {
-      set({ isLoading: true, error: null });
-      const res = await userService.userAddToWishlist(productId);
-      set({
-        isLoading: false,
-        success: res.message,
-      });
-    } catch (err) {
-      set({
-        isLoading: false,
-        error: err.response?.data?.message || "Failed to add to wishlist",
-      });
-    }
-  },
+userAddToWishlist: async (productId) => {
+  try {
+    set({ isLoading: true, error: null });
+
+    const res = await userService.userAddToWishlist(productId);
+    set((state) => ({
+      wishlistCount: state.wishlistCount + 1,
+      isLoading: false,
+      success: res.message,
+    }));
+    get().userGetWishlist();
+
+  } catch (err) {
+    set({
+      isLoading: false,
+      error: err.response?.data?.message || "Failed to add to wishlist",
+    });
+  }
+},
   userRemoveFromWishlist: async (productId) => {
     try {
       set({ isLoading: true, error: null });
@@ -119,4 +130,77 @@ export const useUserStore = create((set,get) => ({
       });
     }
   },
+userGetCart: async () => {
+  try {
+    set({ isLoading: true, error: null });
+
+    const res = await userService.userGetCart();
+    
+    set({
+      isLoading: false,
+      carts: res,
+      cartCount: res.items.length, 
+    });
+
+  } catch (err) {
+    toast.error("Something went wrong !!!");
+
+    set({
+      isLoading: false,
+      error: err.response?.data?.message || "Failed to get cart",
+    });
+  }
+},
+userAddToCart: async (cartData) => {
+  try {
+    set({ isLoading: true, error: null });
+    const res = await userService.userAddToCart(cartData);
+    get().userGetCart();
+    set({
+      isLoading: false,
+      success: res.message,
+      cartCount: res.items.length,
+    });
+    toast.success("Add to cart success");
+  } catch (err) {
+    console.log(err)
+    toast.error("Something went wrong !!!");
+
+    set({
+      isLoading: false,
+      error: err.response?.data?.message || "Failed to add to cart",
+    });
+  }
+},
+userRemoveItemFromCart: async (prodId) => {
+  try {
+    set({ isLoading: true, error: null });
+    await userService.userRemoveItemFromCart(prodId);
+    toast.success("Remove item success");
+    await get().userGetCart();
+
+    set({ isLoading: false });
+
+  } catch (err) {
+    set({
+      isLoading: false,
+      error: err.response?.data?.message || "Failed to remove item",
+    });
+
+    toast.error(err.response?.data?.message || "Error");
+  }
+},
+userUpdateQuantity: async (prodId, quantity) => {
+  try {
+    set({ isLoading: true, error: null });
+    await userService.userUpdateQuantity({ prodId, quantity });
+    await get().userGetCart();
+    set({ isLoading: false });
+  } catch (err) {
+    set({
+      isLoading: false,
+      error: err.response?.data?.message || "Update failed",
+    });
+  }
+},
 }));

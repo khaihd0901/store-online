@@ -299,9 +299,7 @@ export const addToWishlist = asyncHandler(async (req, res) => {
 // ============================
 export const removeFromWishlist = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  const  {prodId}  = req.body; // or req.body
-console.log({prodId})
-  // Validate product ID
+  const  {prodId}  = req.body;
   if (!mongoose.Types.ObjectId.isValid(prodId)) {
     return res.status(400).json({ message: "Invalid product ID" });
   }
@@ -379,15 +377,12 @@ export const userCart = asyncHandler(async (req, res) => {
       });
     }
   }
-
   // 🔄 Recalculate total
   userCart.cartTotal = userCart.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-
   await userCart.save();
-
   res.status(200).json(userCart);
 });
 
@@ -406,7 +401,96 @@ export const getUserCart = asyncHandler(async (req, res) => {
 
   res.status(200).json(cart);
 });
+// ============================
+// UPDATE CART QUANTITY
+// ============================
+export const updateCartItemQuantity = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  const { prodId, quantity } = req.body;
+  const product = await Product.findById(prodId);
 
+  if (!mongoose.Types.ObjectId.isValid(prodId)) {
+    return res.status(400).json({ message: "Invalid product ID" });
+  }
+
+  if (quantity > product.stock) {
+  return res.status(400).json({
+    message: `Only ${product.stock} items in stock`,
+  });
+}
+  if (quantity < 1) {
+    return res.status(400).json({ message: "Quantity must be >= 1" });
+  }
+
+  const cart = await Cart.findOne({ orderBy: _id });
+
+  if (!cart) {
+    return res.status(404).json({ message: "Cart not found" });
+  }
+
+  const itemIndex = cart.items.findIndex(
+    (item) => item.prodId.toString() === prodId
+  );
+
+  if (itemIndex === -1) {
+    return res.status(404).json({ message: "Item not in cart" });
+  }
+
+  cart.items[itemIndex].quantity = quantity;
+
+  // 🔄 Recalculate total
+  cart.cartTotal = cart.items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+
+  // reset coupon
+  cart.totalAfterDiscount = undefined;
+  cart.appliedCoupon = undefined;
+
+  await cart.save();
+
+  res.status(200).json(cart);
+});
+// ============================
+// REMOVE ITEM FROM CART
+// ============================
+export const removeFromCart = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  const { prodId } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(prodId)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid product ID",
+    });
+  }
+
+  const cart = await Cart.findOne({ orderBy: _id });
+  if (!cart) {
+    return res.status(404).json({
+      success: false,
+      message: "Cart not found",
+    });
+  }
+
+  const initialLength = cart.items.length;
+  cart.items = cart.items.filter(
+    (item) => !item.prodId.equals(prodId)
+  );
+
+  cart.cartTotal = cart.items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+
+  cart.totalAfterDiscount = undefined;
+  cart.appliedCoupon = undefined;
+
+  await cart.save();
+
+  res.status(200).json(cart);
+});
 // ============================
 // EMPTY CART
 // ============================

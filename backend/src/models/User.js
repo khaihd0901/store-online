@@ -37,12 +37,6 @@ const UserSchema = mongoose.Schema(
     avatarUrl: {
       type: String,
     },
-    cart: [
-      {
-        type: Array,
-        default: [],
-      },
-    ],
     wishList: [
       {
         type: mongoose.Schema.Types.ObjectId,

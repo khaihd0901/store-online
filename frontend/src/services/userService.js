@@ -34,6 +34,14 @@ const userGetCart = async () =>{
     const res = await api.get(`user/get-cart`)
     return res.data
 }
+const userRemoveItemFromCart = async (productId) =>{
+    const res = await api.post('user/delete-item', {prodId: productId})
+    return res.data
+}
+const userUpdateQuantity = async (cartData) =>{
+    const res = await api.put('user/update-quantity', cartData)
+    return res.data
+}
 const userService = {
     userForgotPasswordOTP,
     userVerifyOTP,
@@ -42,7 +50,9 @@ const userService = {
     userRemoveFromWishlist,
     userGetWishlist,
     userAddToCart,
-    userGetCart
+    userGetCart,
+    userRemoveItemFromCart,
+    userUpdateQuantity
 }
 
 export default userService
