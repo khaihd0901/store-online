@@ -18,6 +18,7 @@ export default function Product() {
   } = useProductStore();
   const { categoryGetAll, categories } = useCategoryStore();
   const data = useProductStore((s) => s.products);
+  console.log(data)
   console.log(data);
   const [prodId, setProdId] = useState(null);
   const [showAdd, setShowAdd] = useState(false);

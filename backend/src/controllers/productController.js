@@ -67,16 +67,13 @@ if (filterQuery.hot !== undefined) {
   if (filterQuery.hot === "true") filterQuery.hot = true;
   if (filterQuery.hot === "false") filterQuery.hot = false;
 }
-
   let mongoQuery = { ...filterQuery };
-
   // ✅ safe search
   if (req.query.search && req.query.search.trim() !== "") {
     mongoQuery.$or = [
       { title: { $regex: req.query.search.trim(), $options: "i" } },
     ];
   }
-
   console.log("FINAL QUERY:", mongoQuery);
 
   let query = Product.find(mongoQuery).populate("category");

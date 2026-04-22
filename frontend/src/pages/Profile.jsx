@@ -78,24 +78,6 @@ export default function UserProfile() {
             </button>
           </div>
 
-          {/* Orders */}
-          <div className="bg-white rounded-2xl shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">
-              Recent Orders
-            </h2>
-
-            <div className="space-y-3">
-              <div className="flex justify-between border-b pb-2">
-                <span>#12345 - The Great Book</span>
-                <span className="text-green-600">Delivered</span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span>#12346 - Another Book</span>
-                <span className="text-yellow-500">Pending</span>
-              </div>
-            </div>
-          </div>
-
           {/* Wishlist */}
           <div className="bg-white rounded-2xl shadow p-6">
             <h2 className="text-xl font-semibold mb-4">

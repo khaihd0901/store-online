@@ -8,7 +8,7 @@ import { useUserStore } from "@/stores/userStore";
 import { toast } from "sonner";
 
 const Header = () => {
-  const { user, authSignOut, authSignUp, isLoading } = useAuthStore();
+  const { user, authSignOut, authSignUp, isLoading,authLogin } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -17,8 +17,7 @@ const Header = () => {
   const [email, setEmail] = useState("");
   const [activeTab, setActiveTab] = useState("signin");
   const [registerSuccess, setRegisterSuccess] = useState("");
-  const { authLogin } = useAuthStore();
-  const { userForgotPasswordOTP, userVerifyOTP, userResetPassword,cartCount,wishlistCount } =
+  const { userForgotPasswordOTP, userVerifyOTP, userResetPassword,cartCount,userGetWishlist,userGetCart,wishlistCount, clearState } =
     useUserStore();
 
   let validationSchema = Yup.object({
@@ -37,6 +36,8 @@ const Header = () => {
     onSubmit: async (values) => {
       try{
       const res = await authLogin(values);
+      await userGetWishlist();
+      await userGetCart();
       if(res){
       window.location.reload();
       }
@@ -122,6 +123,11 @@ const Header = () => {
       setStep(1);
     },
   });
+  const handleSignOut = async () =>{
+    await authSignOut();
+    clearState();
+  }
+  console.log(wishlistCount,cartCount)
   return (
     <>
       <header id="header" className="site-header sticky top-0 z-40 bg-white">
@@ -711,9 +717,7 @@ const Header = () => {
             {/* Logout */}
             <button
               className="w-full text-left px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 transition flex items-center gap-2"
-              onClick={() => {
-                authSignOut();
-              }}
+              onClick={handleSignOut}
             >
               <LogOut size={22} />
               <span>Logout</span>

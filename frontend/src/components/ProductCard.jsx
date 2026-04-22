@@ -30,6 +30,8 @@ const ProductCard = ({ id, image, title, author, price, onClickWishlist,onClickA
           </div>
           <span className="price text-red-500 font-bold text-xl">${price}</span>
         </Link>
+
+        {/* giu nguyen */}
         <div className="card-concern absolute left-0 right-0 bottom-6 flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
           <button
             type="button"
