@@ -19,6 +19,8 @@ export const useUserStore = create((set,get) => ({
       email: "",
       error: null,
       success: null,
+      cartCount: 0,
+      wishlistCount: 0,
       cart: [],
       wishlist: [],
     });

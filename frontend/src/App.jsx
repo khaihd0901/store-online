@@ -13,12 +13,16 @@ import About from "./pages/About.jsx";
 import VerifyEmail from "./pages/VerifyEmail.jsx";
 import { useUserStore } from "./stores/userStore.js";
 import { useEffect } from "react";
+import { useAuthStore } from "./stores/authStore.js";
 function App() {
   const userGetCart = useUserStore((state) => state.userGetCart);
   const userGetWishlist = useUserStore((state) => state.userGetWishlist);
+  const { accessToken } = useAuthStore();
   useEffect(() => {
-    userGetWishlist();
-    userGetCart();
+    if (accessToken) {
+      userGetWishlist();
+      userGetCart();
+    }
   }, []);
   return (
     <BrowserRouter>
