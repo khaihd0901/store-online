@@ -1,21 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
 import ProductCard from './ProductCard';
-
-const mockProducts = [
-  { id: 1, title: "House of Sky Breath", author: "Lauren Asher", price: 870, image: "/images/product-item1.png" },
-  { id: 2, title: "Heartland Stars", author: "Lauren Asher", price: 870, image: "/images/product-item2.png" },
-  { id: 3, title: "Heavenly Bodies", author: "Lauren Asher", price: 870, image: "/images/product-item3.png" },
-  { id: 4, title: "His Saving Grace", author: "Lauren Asher", price: 870, image: "/images/product-item4.png" },
-  { id: 5, title: "My Dearest Darkest", author: "Lauren Asher", price: 870, image: "/images/product-item5.png" },
-  { id: 6, title: "The Story of Success", author: "Lauren Asher", price: 870, image: "/images/product-item6.png" },
-];
+import { useProductStore } from '../stores/productStore';
+import { useUserStore } from '@/stores/userStore';
 
 const ProductSection = ({ title }) => {
+  const { bestSellingProducts, productGetBestSelling, isLoading } = useProductStore();
+  const { userAddToWishlist, userAddToCart } = useUserStore();
+
+  useEffect(() => {
+    productGetBestSelling();
+  }, []);
+
   return (
     <section className="relative py-16 bg-white border-b border-gray-100">
       <div className="container mx-auto px-4 relative">
@@ -29,42 +29,62 @@ const ProductSection = ({ title }) => {
         </div>
 
         {/* Khung chứa Swiper Slider và Custom Arrows */}
-        {/* ĐÃ SỬA: Thêm class group để tạo hiệu ứng hover (tùy chọn) */}
         <div className="relative w-full">
           
-          {/* ĐÃ SỬA: Thay '-left-5' thành 'left-0 md:left-2'. 
-              Nút sẽ nằm gọn bên trong viền, nổi lên trên quyển sách một chút, KHÔNG BAO GIỜ bị cắt lẹm nữa. */}
           <button className="custom-prev-btn absolute top-[35%] left-0 md:left-2 -translate-y-1/2 z-40 w-12 h-12 flex items-center justify-center bg-white rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-100 text-gray-800 hover:bg-gray-50 transition-colors cursor-pointer">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
 
-          <Swiper
-            modules={[Navigation, Autoplay]}
-            spaceBetween={30}
-            slidesPerView={1}
-            loop={true} 
-            navigation={{
-              nextEl: '.custom-next-btn',
-              prevEl: '.custom-prev-btn',
-            }}
-            autoplay={{ delay: 3000, disableOnInteraction: false }}
-            breakpoints={{
-              640: { slidesPerView: 2 },
-              768: { slidesPerView: 3 },
-              1024: { slidesPerView: 5 }, 
-            }}
-            className="py-4"
-          >
-            {mockProducts.map((product) => (
-              <SwiperSlide key={product.id}>
-                <ProductCard {...product} />
-              </SwiperSlide>
-            ))}
-          </Swiper>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
+            </div>
+          ) : (
+            <Swiper
+              modules={[Navigation, Autoplay]}
+              spaceBetween={30}
+              slidesPerView={1}
+              loop={bestSellingProducts.length > 5} 
+              navigation={{
+                nextEl: '.custom-next-btn',
+                prevEl: '.custom-prev-btn',
+              }}
+              autoplay={{ delay: 3000, disableOnInteraction: false }}
+              breakpoints={{
+                640: { slidesPerView: 2 },
+                768: { slidesPerView: 3 },
+                1024: { slidesPerView: 5 }, 
+              }}
+              className="py-4"
+            >
+              {bestSellingProducts.map((product) => (
+                <SwiperSlide key={product._id}>
+                  <ProductCard 
+                    id={product._id}
+                    title={product.title}
+                    author={product.author}
+                    price={product.price}
+                    image={product.images && product.images.length > 0 ? product.images[0].url : "/images/placeholder.png"}
+                    onClickWishlist={() => userAddToWishlist(product._id)}
+                    onClickAddCart={() =>
+                      userAddToCart({
+                        cart: [
+                          {
+                            prodId: product._id,
+                            quantity: 1,
+                            price: product.price,
+                          },
+                        ],
+                      })
+                    }
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          )}
 
-          {/* ĐÃ SỬA: Thay '-right-5' thành 'right-0 md:right-2'. */}
           <button className="custom-next-btn absolute top-[35%] right-0 md:right-2 -translate-y-1/2 z-40 w-12 h-12 flex items-center justify-center bg-white rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-100 text-gray-800 hover:bg-gray-50 transition-colors cursor-pointer">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />

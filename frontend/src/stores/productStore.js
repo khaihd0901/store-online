@@ -4,6 +4,7 @@ import productService from "../services/productService";
 
 export const useProductStore = create((set) => ({
   products: [],
+  bestSellingProducts: [],
   product: null,
   pagination: {},
   isLoading: false,
@@ -34,6 +35,19 @@ export const useProductStore = create((set) => ({
       set({ isLoading: true, isError: false });
       const res = await productService.getProductById(id);
       set({ product: res });
+    } catch (err) {
+      console.log(err);
+      set({ isError: true });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  productGetBestSelling: async () => {
+    try {
+      set({ isLoading: true, isError: false });
+      const res = await productService.getBestSellingProducts();
+      set({ bestSellingProducts: res });
     } catch (err) {
       console.log(err);
       set({ isError: true });
