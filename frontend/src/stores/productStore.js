@@ -2,8 +2,9 @@
 import { create } from "zustand";
 import productService from "../services/productService";
 
-export const useProductStore = create((set, get) => ({
+export const useProductStore = create((set) => ({
   products: [],
+  bestSellingProducts: [],
   product: null,
   pagination: {},
   isLoading: false,
@@ -11,21 +12,47 @@ export const useProductStore = create((set, get) => ({
   isError: false,
   lastQuery: {},
 
-    productSearch: async (query = {}) => {
-  try {
-    set({ isLoading: true, lastQuery: query });
+  productSearch: async (query = {}) => {
+    try {
+      set({ isLoading: true, lastQuery: query });
 
-    const res = await productService.searchProducts(query);
-    set({
-      products: res.data,
-      pagination: res.pagination,
-    });
+      const res = await productService.searchProducts(query);
+      console.log("hello");
+      set({
+        products: res.data,
+        pagination: res.pagination,
+      });
+    } catch (err) {
+      console.log(err);
+      set({ isError: true });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
 
-  } catch (err) {
-    console.log(err);
-    set({ isError: true });
-  } finally {
-    set({ isLoading: false });
-  }
-},
+  productGetById: async (id) => {
+    try {
+      set({ isLoading: true, isError: false });
+      const res = await productService.getProductById(id);
+      set({ product: res });
+    } catch (err) {
+      console.log(err);
+      set({ isError: true });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  productGetBestSelling: async () => {
+    try {
+      set({ isLoading: true, isError: false });
+      const res = await productService.getBestSellingProducts();
+      set({ bestSellingProducts: res });
+    } catch (err) {
+      console.log(err);
+      set({ isError: true });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
 }));
