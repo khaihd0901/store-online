@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import productService from "../services/productService";
 
-export const useProductStore = create((set, get) => ({
+export const useProductStore = create((set) => ({
   products: [],
   product: null,
   pagination: {},
