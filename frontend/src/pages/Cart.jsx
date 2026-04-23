@@ -1,10 +1,16 @@
 import { useUserStore } from "@/stores/userStore";
+import { useState } from "react";
 import { Link } from "react-router";
 
 export default function Cart() {
   const { carts, userRemoveItemFromCart, userUpdateQuantity } = useUserStore();
-  const handleRemoveItem = async (id) => {
-    await userRemoveItemFromCart(id);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+
+  const confirmRemove = async () => {
+    await userRemoveItemFromCart(selectedId);
+    setShowConfirm(false);
+    setSelectedId(null);
   };
   return (
     <div className="bg-gray-50 min-h-screen py-10">
@@ -31,7 +37,7 @@ export default function Cart() {
               className="bg-white rounded-2xl shadow p-4 flex gap-4"
             >
               <img
-                src={item.prodId.image}
+                src={item.prodId.images[0]?.url}
                 alt={item.prodId.title}
                 className="w-24 h-32 object-cover rounded-lg"
               />
@@ -48,7 +54,8 @@ export default function Cart() {
                   <button
                     onClick={() => {
                       if (item.quantity === 1) {
-                        userRemoveItemFromCart(item.prodId._id);
+                        setSelectedId(item.prodId._id);
+                        setShowConfirm(true);
                       } else {
                         userUpdateQuantity(item.prodId._id, item.quantity - 1);
                       }
@@ -83,7 +90,10 @@ export default function Cart() {
 
               {/* Remove */}
               <button
-                onClick={() => handleRemoveItem(item.prodId._id)}
+                onClick={() => {
+                  setSelectedId(item.prodId._id);
+                  setShowConfirm(true);
+                }}
                 className="text-red-500 hover:underline"
               >
                 Remove
@@ -118,6 +128,32 @@ export default function Cart() {
           </button>
         </div>
       </div>
+
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-80 shadow-lg">
+            <h3 className="text-lg font-semibold mb-3">Remove item?</h3>
+            <p className="text-sm text-gray-500 mb-5">
+              Are you sure you want to remove this item from your cart?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 rounded-lg border"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmRemove}
+                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,13 @@
 import api from "@/middlewares/axios"
 
+const userGetUserById = async (id) =>{
+    const res = await api.get(`user/${id}`)
+    return res.data
+}
+const userUpdate = async (id,data) =>{
+    const res = await api.put(`user/update/${id}`,data);
+    return res.data
+}
 const userForgotPasswordOTP = async (email) =>{
     const res = await api.post(`user/forgot-password`, email)
     return res.data
@@ -43,6 +51,8 @@ const userUpdateQuantity = async (cartData) =>{
     return res.data
 }
 const userService = {
+    userUpdate,
+    userGetUserById,
     userForgotPasswordOTP,
     userVerifyOTP,
     userResetPassword,

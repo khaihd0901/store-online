@@ -127,10 +127,9 @@ const Header = () => {
     await authSignOut();
     clearState();
   }
-  console.log(wishlistCount,cartCount)
   return (
     <>
-      <header id="header" className="site-header sticky top-0 z-40 bg-white">
+      <header id="header" className="site-header z-40 bg-white sticky top-0">
         {/* Main Navigation */}
         <nav
           id="header-nav"

@@ -29,11 +29,27 @@ const UserSchema = mongoose.Schema(
       type: Number,
       trim: true,
     },
-    address: {
-      type: String,
-      lowercase: true,
-      trim: true,
-    },
+    addresses: [
+      {
+        fullName: String,
+        phone: String,
+        street: String,
+
+        provinceCode: String,
+        provinceName: String,
+
+        districtCode: String,
+        districtName: String,
+
+        wardCode: String,
+        wardName: String,
+
+        isDefault: {
+          type: Boolean,
+          default: false,
+        },
+      },
+    ],
     avatarUrl: {
       type: String,
     },
@@ -85,17 +101,13 @@ UserSchema.pre("save", async function () {
 
   this.password = await bcrypt.hash(this.password, 10);
 });
-// UserSchema.methods.createPasswordResetToken = function () {
-//   const resetToken = crypto.randomBytes(32).toString("hex");
-//   this.passWordResetToken = crypto
-//     .createHash("sha256")
-//     .update(resetToken)
-//     .digest("hex");
+UserSchema.path("addresses").validate(function (value) {
+  return value.length <= 3;
+}, "Max 3 addresses");
 
-//   this.passWordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-//   return resetToken; // send this via email
-// };
+UserSchema.path("addresses").validate(function (value) {
+  return value.length >= 1;
+}, "At least 1 address required");
 UserSchema.methods.createOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
 

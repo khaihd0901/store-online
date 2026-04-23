@@ -1,16 +1,21 @@
 import { useUserStore } from "@/stores/userStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 
 export default function WishList() {
   const { userGetWishlist, userRemoveFromWishlist, wishlist, userAddToCart } =
     useUserStore();
+
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
   useEffect(() => {
     userGetWishlist();
   }, []);
-  const removeItem = async (id) => {
-    await userRemoveFromWishlist(id);
+  const confirmRemove = async () => {
+    await userRemoveFromWishlist(selectedId);
     await userGetWishlist();
+    setShowConfirm(false);
+    setSelectedId(null);
   };
   return (
     <div className="bg-gray-50 py-10">
@@ -40,9 +45,9 @@ export default function WishList() {
                 className="bg-white rounded-2xl shadow hover:shadow-md transition p-4"
               >
                 <img
-                  src={item.image}
+                  src={item.images[0].url}
                   alt={item.title}
-                  className="h-48 w-full object-cover rounded-lg mb-3"
+                  className="h-48 mx-auto object-cover rounded-lg mb-3"
                 />
 
                 <h3 className="font-semibold text-sm line-clamp-2">
@@ -81,7 +86,10 @@ export default function WishList() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => removeItem(item._id)}
+                    onClick={() => {
+                      setSelectedId(item._id);
+                      setShowConfirm(true);
+                    }}
                     className="px-3 py-2 border rounded-lg text-red-500 hover:bg-red-50"
                   >
                     ✕
@@ -92,6 +100,31 @@ export default function WishList() {
           </div>
         )}
       </div>
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-80 shadow-lg">
+            <h3 className="text-lg font-semibold mb-3">Remove item?</h3>
+            <p className="text-sm text-gray-500 mb-5">
+              Are you sure you want to remove this item from your wishlist?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 rounded-lg border"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmRemove}
+                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

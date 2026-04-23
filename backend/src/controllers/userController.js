@@ -21,11 +21,7 @@ export const getUsers = asyncHandler(async (req, res) => {
 });
 
 export const authMe = asyncHandler(async (req, res) => {
-  res.status(200).json({
-    userId: req.user._id,
-    email: req.user.email,
-    firstName: req.user.firstName,
-  });
+  res.status(200).json(req.user);
 });
 // ============================
 // GET USER BY ID
@@ -45,13 +41,12 @@ export const getUserById = asyncHandler(async (req, res) => {
 // UPDATE USER
 // ============================
 export const updateUser = asyncHandler(async (req, res) => {
-  const { firstName, lastName, phone, address } = req.body;
+  const { firstName, lastName, phone } = req.body;
 
   const updateData = {
     firstName,
     lastName,
     phone,
-    address,
     fullName: `${firstName} ${lastName}`,
   };
 
@@ -71,7 +66,60 @@ export const updateUser = asyncHandler(async (req, res) => {
 
   res.status(200).json(user);
 });
+export const addAddress = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (user.addresses.length >= 3) {
+    return res.status(400).json({ message: "Max 3 addresses" });
+  }
 
+  const newAddress = req.body;
+
+  if (user.addresses.length === 0) {
+    newAddress.isDefault = true;
+  }
+
+  user.addresses.push(newAddress);
+  await user.save();
+
+  res.json(user.addresses);
+});
+export const setDefaultAddress = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+
+  user.addresses.forEach(addr => {
+    addr.isDefault = addr._id.toString() === req.params.id;
+  });
+
+  await user.save();
+  res.json(user.addresses);
+});
+
+export const deleteAddress = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user.id);
+
+  if (user.addresses.length <= 1) {
+    return res.status(400).json({ message: "Must have at least 1 address" });
+  }
+  const wasDefault = user.addresses.find(
+    a => a._id.toString() === req.params.id
+  )?.isDefault;
+
+  user.addresses = user.addresses.filter(
+    addr => addr._id.toString() !== req.params.id
+  );
+
+  if (wasDefault) {
+    user.addresses[0].isDefault = true;
+  }
+
+  await user.save();
+  res.json(user.addresses);
+});
+
+export const getAddresses = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  res.json(user.addresses);
+})
 // ============================
 // SOFT DELETE USER
 // ============================
@@ -585,22 +633,24 @@ export const createOrder = asyncHandler(async (req, res) => {
   session.startTransaction();
 
   try {
-    const { COD, couponApplied } = req.body;
+    const { COD, couponApplied, addressId } = req.body;
     const { _id } = req.user;
 
     if (!COD) {
-      res.status(400);
       throw new Error("Create cash order failed");
     }
 
+    // ✅ get user + address
+    const user = await User.findById(_id).session(session);
+    if (!user) throw new Error("User not found");
+
+    const address = user.addresses.id(addressId);
+    if (!address) throw new Error("Address not found");
+
     const userCart = await Cart.findOne({ orderBy: _id }).session(session);
+    if (!userCart) throw new Error("Cart not found");
 
-    if (!userCart) {
-      res.status(404);
-      throw new Error("Cart not found");
-    }
-
-    // ✅ check stock before order
+    // ✅ check stock
     for (const item of userCart.items) {
       const product = await Product.findById(item.prodId).session(session);
 
@@ -609,13 +659,13 @@ export const createOrder = asyncHandler(async (req, res) => {
       }
     }
 
-    // 💰 calculate final price
+    // 💰 calculate total
     const finalAmount =
       couponApplied && userCart.totalAfterDiscount
         ? userCart.totalAfterDiscount
         : userCart.cartTotal;
 
-    // ✅ create order
+    // ✅ create order WITH SHIPPING ADDRESS
     const order = await Order.create(
       [
         {
@@ -623,6 +673,15 @@ export const createOrder = asyncHandler(async (req, res) => {
           items: userCart.items,
           totalAmount: finalAmount,
           orderStatus: "Processing",
+
+          // 🔥 ADD THIS
+          shippingAddress: {
+            street: address.street,
+            provinceName: address.provinceName,
+            districtName: address.districtName,
+            wardName: address.wardName,
+          },
+
           paymentIntent: {
             amount: finalAmount,
             status: "processing",
@@ -633,7 +692,7 @@ export const createOrder = asyncHandler(async (req, res) => {
       { session }
     );
 
-    // ✅ update products (stock + sold + auto HOT)
+    // ✅ update stock
     const updates = userCart.items.map((item) => ({
       updateOne: {
         filter: { _id: item.prodId },

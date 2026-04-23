@@ -1,13 +1,14 @@
+import Badge from "@/components/Badge";
 import { Link } from "react-router";
 
 export default function About() {
   return (
     <div className="bg-white">
-
+      <Badge to={"About"} title={"About"}/>
       {/* Hero Section */}
       <section className="bg-gray-50 py-16 text-center">
         <h1 className="text-4xl font-bold mb-4">
-          About Our BookLy
+          Our BookLy
         </h1>
         <p className="text-gray-500 max-w-2xl mx-auto">
           We are passionate about books and dedicated to bringing the best reading
@@ -92,7 +93,7 @@ export default function About() {
         <p className="text-gray-300 mb-6">
           Explore thousands of books and discover your next favorite read.
         </p>
-        <Link to="/shop" className="bg-white text-black px-6 py-2 rounded-lg font-medium">
+        <Link to="/shop" className="bg-red-400 text-white px-6 py-2 rounded-lg font-medium hover:bg-red-500">
           Shop Now
         </Link>
       </section>

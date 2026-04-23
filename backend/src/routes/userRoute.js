@@ -1,5 +1,5 @@
 import express from 'express'
-import { getUsers,getUserById, updateUser,updatePassword, forgotPasswordOTP, resetPassword, getWishlist, userCart, getUserCart, emptyCart, applyCoupon, createOrder, getAllOrders, getOrderbyUser, authMe, verifyOTP, addToWishlist, removeFromWishlist, toggleUserLock, softDeleteUser, restoreUser, getDeletedUsers, removeFromCart, updateCartItemQuantity } from '../controllers/userController.js';
+import { getUsers,getUserById, updateUser,updatePassword, forgotPasswordOTP, resetPassword, getWishlist, userCart, getUserCart, emptyCart, applyCoupon, createOrder, getAllOrders, getOrderbyUser, authMe, verifyOTP, addToWishlist, removeFromWishlist, toggleUserLock, softDeleteUser, restoreUser, getDeletedUsers, removeFromCart, updateCartItemQuantity, addAddress, setDefaultAddress, deleteAddress, getAddresses } from '../controllers/userController.js';
 import {protectedRoute, isAdmin} from '../middlewares/authMiddleware.js';
 
 
@@ -26,6 +26,14 @@ router.post('/empty-cart',protectedRoute, emptyCart);
 router.post('/apply-coupon',protectedRoute, applyCoupon );
 router.post('/create-order',protectedRoute, createOrder );
 router.post('/get-order',protectedRoute, getOrderbyUser)
+router.post('/add-address',protectedRoute, addAddress)
+router.put('/address/default/:id',protectedRoute, setDefaultAddress)
+router.delete('/address/:id',protectedRoute, deleteAddress)
+router.get('/address',protectedRoute, getAddresses)
+
+
+
+
 router.get('/get-all-orders',protectedRoute,isAdmin, getAllOrders)
 
 router.get('/:id',protectedRoute, getUserById);
