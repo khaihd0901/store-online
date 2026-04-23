@@ -3,7 +3,7 @@ import Layout from "./components/Layout/Layout.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import { Toaster } from "sonner";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import Profile from "./pages/Profile.jsx";
+import Profile from "./pages/UserProfile.jsx";
 import Order from "./pages/Order.jsx";
 import ShopPage from "./pages/ShopPage.jsx";
 import WishList from "./pages/WishList.jsx";

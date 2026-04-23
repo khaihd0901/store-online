@@ -3,6 +3,7 @@ import userService from "@/services/userService";
 import { toast } from "sonner";
 
 export const useUserStore = create((set,get) => ({
+  user: null,
   isLoading: false,
   error: null,
   success: null,
@@ -24,6 +25,23 @@ export const useUserStore = create((set,get) => ({
       cart: [],
       wishlist: [],
     });
+  },
+  userUpdate: async (id,data) => {
+    try {
+      set({ isLoading: true, error: null });
+      const res = await userService.userUpdate(id,data);
+
+      set({
+        isLoading: false,
+        success: res.message,
+      });
+toast.success("Update Information Success")
+    } catch (err) {
+      set({
+        isLoading: false,
+        error: err.response?.data?.message || "Failed to send OTP",
+      });
+    }
   },
   userForgotPasswordOTP: async (emailData) => {
     try {

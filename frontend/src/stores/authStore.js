@@ -84,7 +84,6 @@ export const useAuthStore = create(
           set({ isLoading: false });
         }
       },
-
       authRefreshToken: async () => {
         try {
           const accessToken = await authService.authRefreshToken();

@@ -1,7 +1,20 @@
+import { useUserStore } from "@/stores/userStore";
 import React from "react";
 import { Link } from "react-router";
 
-const ProductCard = ({ id, image, title, author, price, onClickWishlist,onClickAddCart }) => {
+const ProductCard = ({
+  id,
+  image,
+  title,
+  author,
+  price,
+  onClickWishlist,
+  onClickAddCart,
+}) => {
+  const { wishlist } = useUserStore();
+  const isInWishlist = wishlist.some(
+    (item) => item._id === id || item.id === id,
+  );
   return (
     <>
       <div className="block group relative p-6 border border-gray-100 rounded-xl hover:shadow-xl transition-shadow duration-300 bg-white h-full cursor-pointer">
@@ -45,7 +58,14 @@ const ProductCard = ({ id, image, title, author, price, onClickWishlist,onClickA
           <button
             type="button"
             onClick={onClickWishlist}
-            className="p-3 bg-gray-900 text-white rounded-full hover:bg-red-500 transition-colors shadow-lg transform translate-y-2 group-hover:translate-y-0"
+            disabled={isInWishlist}
+            className={`p-3 rounded-full shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-colors
+    ${
+      isInWishlist
+        ? "bg-red-500 text-white cursor-not-allowed"
+        : "bg-gray-900 text-white hover:bg-red-500"
+    }
+  `}
           >
             <svg className="w-5 h-5">
               <use xlinkHref="#heart"></use>

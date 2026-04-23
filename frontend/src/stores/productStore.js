@@ -16,7 +16,6 @@ export const useProductStore = create((set, get) => ({
     set({ isLoading: true, lastQuery: query });
 
     const res = await productService.searchProducts(query);
-    console.log("hello")
     set({
       products: res.data,
       pagination: res.pagination,
