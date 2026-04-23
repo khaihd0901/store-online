@@ -17,10 +17,16 @@ const getProductById = async (id) => {
   return res.data;
 };
 
+const getBestSellingProducts = async () => {
+  const res = await api.get("product/best-selling-product");
+  return res.data;
+};
+
 const productService = {
   getProducts,
   searchProducts,
   getProductById,
+  getBestSellingProducts,
 };
 
 export default productService;
