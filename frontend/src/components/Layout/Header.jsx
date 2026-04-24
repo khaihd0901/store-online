@@ -8,7 +8,7 @@ import { useUserStore } from "@/stores/userStore";
 import { toast } from "sonner";
 
 const Header = () => {
-  const { user, authSignOut, authSignUp, isLoading,authLogin } = useAuthStore();
+  const { user, authSignOut, authSignUp, isLoading,authLogin,isLoginOpen, openLogin, closeLogin } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -17,9 +17,9 @@ const Header = () => {
   const [email, setEmail] = useState("");
   const [activeTab, setActiveTab] = useState("signin");
   const [registerSuccess, setRegisterSuccess] = useState("");
-  const { userForgotPasswordOTP, userVerifyOTP, userResetPassword,cartCount,userGetWishlist,userGetCart,wishlistCount, clearState } =
+  const { userForgotPasswordOTP, userVerifyOTP, userResetPassword,userGetWishlist,userGetCart,wishlistCount, clearState } =
     useUserStore();
-
+const cartCount = useUserStore((state) => state.cartCount);
   let validationSchema = Yup.object({
     email: Yup.string()
       .email("Invalid email address")
@@ -220,6 +220,7 @@ const Header = () => {
                   onClick={(e) => {
                     e.stopPropagation();
                     if (!user) {
+                          openLogin();
                       setUserModalOpen(true);
                     } else {
                       setDropdownOpen((prev) => !prev);
@@ -308,7 +309,7 @@ const Header = () => {
       )}
 
       {/* User Modal */}
-      {userModalOpen && !user ? (
+      {isLoginOpen && !user ? (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0"
@@ -318,7 +319,7 @@ const Header = () => {
           <div className="bg-white rounded-xl w-full max-w-md relative z-10 shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="flex justify-end p-4 pb-0">
               <button
-                onClick={() => setUserModalOpen(false)}
+                onClick={closeLogin}
                 className="p-2 text-gray-400 hover:text-red-500 transition-colors"
               >
                 <svg className="w-6 h-6">

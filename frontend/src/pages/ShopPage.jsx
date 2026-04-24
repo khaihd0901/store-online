@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router";
 import ProductCard from "../components/ProductCard";
 import { useUserStore } from "@/stores/userStore";
 import { useProductStore } from "../stores/productStore";
 // import { useCategoryStore } from "../stores/categoryStore";
 import { useCallback } from "react";
 import Badge from "@/components/Badge";
+import { useAuthStore } from "@/stores/authStore";
 const ShopPage = () => {
   const { userAddToWishlist, userAddToCart } = useUserStore();
-
+  const { user } = useAuthStore();
   const {
     productSearch,
     pagination,
@@ -46,12 +46,12 @@ const ShopPage = () => {
 
   return (
     <div className="bg-white ">
-      <Badge to={"Our Shop"} title={"Our Shop"}/>
+      <Badge to={"Our Shop"} title={"Our Shop"} />
       <div className="container mx-auto pb-16 pt-10 px-4">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* ================= CỘT TRÁI: SIDEBAR ================= */}
           <div className="lg:col-span-1">
-  <div className="sticky top-20 self-start">
+            <div className="sticky top-20 self-start">
               {/* Thanh Search */}
               <div className="flex items-center p-1.5 mb-10 border border-gray-300 rounded-xl bg-white focus-within:border-red-400 focus-within:ring-1 focus-within:ring-red-400 transition-all">
                 <input
@@ -304,17 +304,20 @@ const ShopPage = () => {
                       price={product.price}
                       // Truyền ID chuẩn xác vào các hàm trong store
                       onClickWishlist={() => userAddToWishlist(productId)}
-                      onClickAddCart={() =>
-                        userAddToCart({
-                          cart: [
-                            {
-                              prodId: productId,
-                              quantity: 1,
-                              price: product.price,
-                            },
-                          ],
-                        })
-                      }
+                      onClickAddCart={async () => {
+                        const productData = {
+                          prodId: productId,
+                          title: product.title,
+                          author: product.author,
+                          price: product.price,
+                          stock: product.stock,
+                          images:
+                            product.images && product.images.length > 0
+                              ? product.images
+                              : [{ url: displayImage }],
+                        };
+                        await userAddToCart(productData);
+                      }}
                     />
                   );
                 })}
