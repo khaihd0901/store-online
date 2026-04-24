@@ -387,15 +387,25 @@ export const getWishlist = asyncHandler(async (req, res) => {
 // ============================
 export const userCart = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  const { cart } = req.body;
+  const { prodId, quantity } = req.body;
 
-  const user = await User.findById(_id);
-  if (!user) {
-    res.status(404);
-    throw new Error("User not found");
+  // ✅ Validate
+  if (!prodId || !quantity) {
+    res.status(400);
+    throw new Error("prodId and quantity are required");
   }
-  // Find existing cart
+
+  // ✅ Get product price
+  const product = await Product.findById(prodId).select("price");
+
+  if (!product) {
+    res.status(404);
+    throw new Error("Product not found");
+  }
+
+  // ✅ Find or create cart
   let userCart = await Cart.findOne({ orderBy: _id });
+
   if (!userCart) {
     userCart = new Cart({
       orderBy: _id,
@@ -404,37 +414,86 @@ export const userCart = asyncHandler(async (req, res) => {
     });
   }
 
-  for (const item of cart) {
-    const product = await Product.findById(item.prodId).select("price");
-    if (!product) continue;
+  // ✅ Check existing item
+  const index = userCart.items.findIndex(
+    (i) => i.prodId.toString() === prodId
+  );
 
-    const existingItemIndex = userCart.items.findIndex(
-      (i) => i.prodId.toString() === item.prodId
-    );
-
-    if (existingItemIndex > -1) {
-      // 🔥 Product exists → increase quantity
-      userCart.items[existingItemIndex].quantity += item.quantity;
-      userCart.items[existingItemIndex].price = product.price; // keep price updated
-    } else {
-      // 🆕 New product
-      userCart.items.push({
-        prodId: item.prodId,
-        quantity: item.quantity,
-        price: product.price,
-      });
-    }
+  if (index > -1) {
+    // 🔥 Update quantity
+    userCart.items[index].quantity += quantity;
+    userCart.items[index].price = product.price;
+  } else {
+    // 🔥 Add new item
+    userCart.items.push({
+      prodId: prodId,
+      quantity: quantity,
+      price: product.price,
+    });
   }
-  // 🔄 Recalculate total
+
+  // ✅ Recalculate total
   userCart.cartTotal = userCart.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  await userCart.save();
-  res.status(200).json(userCart);
+
+await userCart.save();
+
+const populatedCart = await Cart.findOne({ orderBy: _id })
+  .populate("items.prodId");
+
+res.status(200).json(populatedCart);
 });
+// ============================
+// MERGE CART
+// ============================
+export const mergeCart = async (req, res) => {
+  const userId = req.user._id;
+  const guestCart = req.body;
 
+  if (!guestCart || guestCart.length === 0) {
+    return res.json({ message: "No guest cart" });
+  }
 
+  let cart = await Cart.findOne({ orderBy: userId });
+
+  if (!cart) {
+    cart = new Cart({
+      orderBy: userId,
+      items: [],
+    });
+  }
+
+  guestCart.forEach((guestItem) => {
+    const existing = cart.items.find(
+      (item) => item.prodId.toString() === guestItem.prodId
+    );
+
+    if (existing) {
+      existing.quantity += guestItem.quantity;
+    } else {
+      cart.items.push({
+        prodId: guestItem.prodId,
+        quantity: guestItem.quantity,
+        price: guestItem.price,
+      });
+    }
+  });
+
+  // 🔥 recalc total
+  cart.cartTotal = cart.items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+
+  await cart.save();
+
+  const populatedCart = await Cart.findOne({ orderBy: userId })
+  .populate("items.prodId");
+
+res.status(200).json(populatedCart);
+};
 // ============================
 // GET USER CART
 // ============================

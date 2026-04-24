@@ -1,16 +1,17 @@
 import { create } from "zustand";
 import userService from "@/services/userService";
+import { getGuestCart, saveGuestCart, clearGuestCart } from "@/utils/guestCart";
 import { toast } from "sonner";
+import { useAuthStore } from "@/stores/authStore";
 
-export const useUserStore = create((set,get) => ({
-  user: null,
+export const useUserStore = create((set, get) => ({
   isLoading: false,
   error: null,
   success: null,
   step: 1,
   email: "",
   wishlist: [],
-  carts : [],
+  carts: [],
   cartCount: 0,
   wishlistCount: 0,
 
@@ -22,20 +23,20 @@ export const useUserStore = create((set,get) => ({
       success: null,
       cartCount: 0,
       wishlistCount: 0,
-      cart: [],
+      carts: [],
       wishlist: [],
     });
   },
-  userUpdate: async (id,data) => {
+  userUpdate: async (id, data) => {
     try {
       set({ isLoading: true, error: null });
-      const res = await userService.userUpdate(id,data);
+      const res = await userService.userUpdate(id, data);
 
       set({
         isLoading: false,
         success: res.message,
       });
-toast.success("Update Information Success")
+      toast.success("Update Information Success");
     } catch (err) {
       set({
         isLoading: false,
@@ -53,7 +54,6 @@ toast.success("Update Information Success")
         email: emailData.email,
         step: 2,
       });
-
     } catch (err) {
       set({
         isLoading: false,
@@ -72,7 +72,6 @@ toast.success("Update Information Success")
         success: res.message,
         step: 3,
       });
-
     } catch (err) {
       set({
         isLoading: false,
@@ -92,7 +91,6 @@ toast.success("Update Information Success")
         step: 1,
         email: "",
       });
-
     } catch (err) {
       set({
         isLoading: false,
@@ -116,25 +114,24 @@ toast.success("Update Information Success")
       });
     }
   },
-userAddToWishlist: async (productId) => {
-  try {
-    set({ isLoading: true, error: null });
+  userAddToWishlist: async (productId) => {
+    try {
+      set({ isLoading: true, error: null });
 
-    const res = await userService.userAddToWishlist(productId);
-    set((state) => ({
-      wishlistCount: state.wishlistCount + 1,
-      isLoading: false,
-      success: res.message,
-    }));
-    get().userGetWishlist();
-
-  } catch (err) {
-    set({
-      isLoading: false,
-      error: err.response?.data?.message || "Failed to add to wishlist",
-    });
-  }
-},
+      const res = await userService.userAddToWishlist(productId);
+      set((state) => ({
+        wishlistCount: state.wishlistCount + 1,
+        isLoading: false,
+        success: res.message,
+      }));
+      get().userGetWishlist();
+    } catch (err) {
+      set({
+        isLoading: false,
+        error: err.response?.data?.message || "Failed to add to wishlist",
+      });
+    }
+  },
   userRemoveFromWishlist: async (productId) => {
     try {
       set({ isLoading: true, error: null });
@@ -150,77 +147,147 @@ userAddToWishlist: async (productId) => {
       });
     }
   },
-userGetCart: async () => {
-  try {
-    set({ isLoading: true, error: null });
+  userGetCart: async () => {
+    try {
+      set({ isLoading: true, error: null });
 
-    const res = await userService.userGetCart();
-    
+      const res = await userService.userGetCart();
+
+      set({
+        isLoading: false,
+        carts: res,
+        cartCount: res.items.length,
+      });
+    } catch (err) {
+      toast.error("Something went wrong !!!");
+
+      set({
+        isLoading: false,
+        error: err.response?.data?.message || "Failed to get cart",
+      });
+    }
+  },
+userAddToCart: async (product) => {
+
+  try {
+    const { user } = useAuthStore.getState();
+    if (!user) {
+      let guestCart = getGuestCart();
+
+      const existIndex = guestCart.findIndex(
+        (i) => i.prodId === product.prodId
+      );
+
+      if (existIndex > -1) {
+        guestCart = guestCart.map((item, index) =>
+          index === existIndex
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      } else {
+        guestCart = [
+          ...guestCart,
+          {
+            prodId: product.prodId,
+            quantity: 1,
+            price: product.price,
+            prodData: {
+              title: product.title,
+              author: product.author,
+              stock: product.stock || 999,
+              images:
+                product.images?.length > 0
+                  ? product.images
+                  : [{ url: product.image || "/placeholder.png" }],
+            },
+          },
+        ];
+      }
+
+      saveGuestCart(guestCart);
+
+      const cartTotal = guestCart.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
+
+      const cartCount = guestCart.length;
+
+      set({
+        carts: {
+          items: [...guestCart], 
+          cartTotal,
+        },
+        cartCount,
+      });
+      toast.success("Add to cart success")
+      return;
+    }
+
+
+    const res = await userService.userAddToCart({
+      prodId: product.prodId,
+      quantity: 1,
+    });
+
+    const cartCount = res?.items?.length || 0;
+
     set({
-      isLoading: false,
       carts: res,
-      cartCount: res.items.length, 
+      cartCount,
     });
+    toast.success("Add to cart success")
 
-  } catch (err) {
-    toast.error("Something went wrong !!!");
-
-    set({
-      isLoading: false,
-      error: err.response?.data?.message || "Failed to get cart",
-    });
+  } catch (error) {
+    toast.error("ADD TO CART ERROR:", error);
+    if (error.response?.data?.message) {
+      toast.error("Server message:", error.response.data.message);
+    }
   }
 },
-userAddToCart: async (cartData) => {
-  try {
-    set({ isLoading: true, error: null });
-    const res = await userService.userAddToCart(cartData);
-    get().userGetCart();
-    set({
-      isLoading: false,
-      success: res.message,
-      cartCount: res.items.length,
-    });
-    toast.success("Add to cart success");
-  } catch (err) {
-    console.log(err)
-    toast.error("Something went wrong !!!");
+  userRemoveItemFromCart: async (prodId) => {
+    try {
+      set({ isLoading: true, error: null });
+      await userService.userRemoveItemFromCart(prodId);
+      toast.success("Remove item success");
+      await get().userGetCart();
+
+      set({ isLoading: false });
+    } catch (err) {
+      set({
+        isLoading: false,
+        error: err.response?.data?.message || "Failed to remove item",
+      });
+
+      toast.error(err.response?.data?.message || "Error");
+    }
+  },
+  userUpdateQuantity: async (prodId, quantity) => {
+    try {
+      set({ isLoading: true, error: null });
+      await userService.userUpdateQuantity({ prodId, quantity });
+      await get().userGetCart();
+      set({ isLoading: false });
+    } catch (err) {
+      set({
+        isLoading: false,
+        error: err.response?.data?.message || "Update failed",
+      });
+    }
+  },
+  userMergeCart: async () => {
+    const guestCart = getGuestCart();
+    console.log("guestCart at store", guestCart);
+
+    if (!guestCart.length) return;
+
+    const res = await userService.userMergeCart(guestCart);
 
     set({
-      isLoading: false,
-      error: err.response?.data?.message || "Failed to add to cart",
-    });
-  }
-},
-userRemoveItemFromCart: async (prodId) => {
-  try {
-    set({ isLoading: true, error: null });
-    await userService.userRemoveItemFromCart(prodId);
-    toast.success("Remove item success");
-    await get().userGetCart();
-
-    set({ isLoading: false });
-
-  } catch (err) {
-    set({
-      isLoading: false,
-      error: err.response?.data?.message || "Failed to remove item",
+      carts: res.items,
+      cartTotal: res.cartTotal,
     });
 
-    toast.error(err.response?.data?.message || "Error");
-  }
-},
-userUpdateQuantity: async (prodId, quantity) => {
-  try {
-    set({ isLoading: true, error: null });
-    await userService.userUpdateQuantity({ prodId, quantity });
-    await get().userGetCart();
-    set({ isLoading: false });
-  } catch (err) {
-    set({
-      isLoading: false,
-      error: err.response?.data?.message || "Update failed",
-    });
-  }
-},
+    clearGuestCart();
+  },
 }));

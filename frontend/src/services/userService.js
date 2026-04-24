@@ -34,7 +34,13 @@ const userRemoveFromWishlist = async (productId) =>{
     const res = await api.put(`user/remove-wishlist`, { prodId: productId })
     return res.data
 }
+const userMergeCart = async (cartData) =>{
+    console.log(cartData)
+    const res = await api.post(`user/merge-cart`,cartData);
+    return res.data
+}
 const userAddToCart = async (cartData) =>{
+    console.log(cartData)
     const res = await api.post(`user/cart`, cartData)
     return res.data
 }
@@ -62,7 +68,8 @@ const userService = {
     userAddToCart,
     userGetCart,
     userRemoveItemFromCart,
-    userUpdateQuantity
+    userUpdateQuantity,
+    userMergeCart
 }
 
 export default userService

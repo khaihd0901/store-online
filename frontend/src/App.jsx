@@ -39,6 +39,8 @@ function App() {
 
           <Route path="/product/:id" element={<ProductPage />} />
           <Route path="/verify-email/:token" element={<VerifyEmail />} />
+          
+            <Route path="/cart" element={<Cart />} />
           {/* <Route path="/products" element={<OurShop />} />
           <Route path="/products/:id" element={<ProductDetail />} /> */}
 
@@ -46,7 +48,6 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/profile" element={<Profile />} />
             <Route path="/orders" element={<Order />} />
-            <Route path="/cart" element={<Cart />} />
             <Route path="/wish-list" element={<WishList />} />
             {/* <Route path="/cart" element={<ShoppingCart />} />
           <Route path="/wish-list" element={<WishList />} />
