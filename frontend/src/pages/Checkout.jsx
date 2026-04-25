@@ -1,89 +1,170 @@
-import React, { useState } from "react";
 import { useUserStore } from "@/stores/userStore";
 import { Truck, Store, ShieldCheck, TicketPercent } from "lucide-react";
+import { useAuthStore } from "@/stores/authStore";
+import { useEffect } from "react";
+import * as Yup from "yup";
+import { useFormik } from "formik";
+import AddressSelector from "@/components/AddressSelector";
 
 const Checkout = () => {
   const { carts } = useUserStore();
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    country: "",
-    city: "",
-    state: "",
+  const { user } = useAuthStore();
+  const checkoutSchema = Yup.object({
+    name: Yup.string().required("Full name is required"),
+    email: Yup.string().email("Invalid email").required("Email is required"),
+    phone: Yup.string().required("Phone is required"),
+
+    provinceCode: Yup.string().required("Select province"),
+    districtCode: Yup.string().required("Select district"),
+    wardCode: Yup.string().required("Select ward"),
+    street: Yup.string().required("Street is required"),
   });
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const formik = useFormik({
+    initialValues: {
+      name: "",
+      email: "",
+      phone: "",
+
+      provinceCode: "",
+      provinceName: "",
+      districtCode: "",
+      districtName: "",
+      wardCode: "",
+      wardName: "",
+      street: "",
+    },
+
+    validationSchema: checkoutSchema,
+
+    onSubmit: (values) => {
+      console.log("CHECKOUT DATA:", values);
+    },
+  });
 
   const subtotal = carts.items?.reduce(
     (acc, item) => acc + item.price * item.quantity,
-    0
+    0,
   );
 
   const shipping = 5;
   const discount = 10;
   const total = subtotal + shipping - discount;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log({ form, carts });
-  };
+  useEffect(() => {
+    if (!user) return;
 
+    const addr =
+      user.addresses?.find((a) => a.isDefault) || user.addresses?.[0];
+
+    formik.setValues({
+      name: user.fullName || `${user.firstName} ${user.lastName}`,
+      email: user.email || "",
+      phone: user.phone || "",
+
+      provinceCode: addr?.provinceCode || "",
+      provinceName: addr?.provinceName || "",
+      districtCode: addr?.districtCode || "",
+      districtName: addr?.districtName || "",
+      wardCode: addr?.wardCode || "",
+      wardName: addr?.wardName || "",
+      street: addr?.street || "",
+    });
+  }, [user]);
   return (
     <div className="min-h-screen bg-gray-100 py-10">
-      <div className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-10 px-4">
-
+      <from
+        onSubmit={formik.handleSubmit}
+        className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-10 px-4"
+      >
         {/* LEFT */}
         <div className="col-span-2">
           <h1 className="text-3xl font-bold mb-6">Checkout</h1>
 
-          {/* FORM */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              name="name"
-              placeholder="Full name"
-              value={form.name}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-3"
-            />
+          <div className="space-y-4">
+            <div className="flex flex-col">
+              <label className="text-xs font-medium text-gray-500 mb-1">
+                Full Name
+              </label>
+              <input
+                name="name"
+                value={formik.values.name}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none disabled:bg-gray-100 transition"
+              />
 
-            <input
-              name="email"
-              placeholder="Email address"
-              value={form.email}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-3"
-            />
-
-            <input
-              name="phone"
-              placeholder="Phone number"
-              value={form.phone}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-3"
-            />
-
-            <input
-              name="country"
-              placeholder="Country"
-              value={form.country}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-3"
-            />
-
-            <div className="grid grid-cols-3 gap-3">
-              <input name="city" placeholder="City" className="border p-3 rounded-lg" onChange={handleChange} />
-              <input name="state" placeholder="State" className="border p-3 rounded-lg" onChange={handleChange} />
-              <input name="zip" placeholder="ZIP" className="border p-3 rounded-lg" onChange={handleChange} />
+              {formik.touched.name && formik.errors.name && (
+                <p className="text-red-500 text-sm">{formik.errors.name}</p>
+              )}
             </div>
+
+            <div className="flex flex-col">
+              <label className="text-xs font-medium text-gray-500 mb-1">
+                Email
+              </label>
+              <input
+                name="name"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none disabled:bg-gray-100 transition"
+              />
+
+              {formik.touched.email && formik.errors.email && (
+                <p className="text-red-500 text-sm">{formik.errors.email}</p>
+              )}
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-xs font-medium text-gray-500 mb-1">
+                Phone number
+              </label>
+              <input
+                name="name"
+                value={formik.values.phone}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none disabled:bg-gray-100 transition"
+              />
+
+              {formik.touched.phone && formik.errors.phone && (
+                <p className="text-red-500 text-sm">{formik.errors.phone}</p>
+              )}
+            </div>
+
+            <AddressSelector
+              values={formik.values}
+              setFieldValue={formik.setFieldValue}
+            />
+            {formik.touched.provinceCode && formik.errors.provinceCode && (
+              <p className="text-red-500 text-sm">
+                {formik.errors.provinceCode}
+              </p>
+            )}
+
+            {formik.touched.districtCode && formik.errors.districtCode && (
+              <p className="text-red-500 text-sm">
+                {formik.errors.districtCode}
+              </p>
+            )}
+
+            {formik.touched.wardCode && formik.errors.wardCode && (
+              <p className="text-red-500 text-sm">{formik.errors.wardCode}</p>
+            )}
+
+            {formik.touched.street && formik.errors.street && (
+              <p className="text-red-500 text-sm">{formik.errors.street}</p>
+            )}
 
             <div className="flex items-center gap-2 text-sm text-gray-500">
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none disabled:bg-gray-100 transition"
+              />
               I agree to Terms & Conditions
             </div>
-          </form>
+          </div>
         </div>
 
         {/* RIGHT */}
@@ -102,7 +183,9 @@ const Checkout = () => {
                   <p className="font-medium text-sm">{item.prodId.title}</p>
                   <p className="text-xs text-gray-500">{item.quantity}x</p>
                 </div>
-                <p className="text-sm font-semibold">${item.price * item.quantity}</p>
+                <p className="text-sm font-semibold">
+                  ${item.price * item.quantity}
+                </p>
               </div>
             ))}
           </div>
@@ -111,7 +194,7 @@ const Checkout = () => {
           <div className="relative mt-6">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               {/* Ticket icon */}
-              <TicketPercent className="text-gray-700 font-bold"/>
+              <TicketPercent className="text-gray-700 font-bold" />
             </span>
 
             <input
@@ -119,9 +202,7 @@ const Checkout = () => {
               className="w-full border p-3 pl-10 pr-24 rounded-lg"
             />
 
-            <button
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-indigo-600 text-white px-4 py-1.5 rounded-md text-sm hover:bg-indigo-700"
-            >
+            <button className="absolute font-medium right-2 top-1/2 -translate-y-1/2 bg-red-400 text-white px-4 py-1.5 rounded-md text-sm hover:bg-red-500">
               Apply
             </button>
           </div>
@@ -146,7 +227,10 @@ const Checkout = () => {
             </div>
           </div>
 
-          <button className="w-full mt-6 bg-red-400 text-white py-3 rounded-xl font-medium hover:bg-red-500">
+          <button
+            type="submit"
+            className="w-full mt-6 bg-red-400 text-white py-3 rounded-xl font-medium hover:bg-red-500"
+          >
             Pay Now
           </button>
 
@@ -154,7 +238,7 @@ const Checkout = () => {
             <ShieldCheck size={16} /> Secure Checkout - SSL Encrypted
           </div>
         </div>
-      </div>
+      </from>
     </div>
   );
 };

@@ -7,17 +7,12 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useCallback } from "react";
 import Badge from "@/components/Badge";
 import { useAuthStore } from "@/stores/authStore";
+import SkeletonCard from "@/components/SkeletonCard";
 const ShopPage = () => {
   const { userAddToWishlist, userAddToCart } = useUserStore();
   const { user } = useAuthStore();
-  const {
-    productSearch,
-    pagination,
-    clearState,
-    productDeleteById,
-    isLoading,
-    products,
-  } = useProductStore();
+  const { productSearch, pagination, clearState, isLoading, products } =
+    useProductStore();
   // const { categoryGetAll, categories } = useCategoryStore();
 
   const [page, setPage] = useState(1);
@@ -206,9 +201,13 @@ const ShopPage = () => {
           <div className="lg:col-span-3">
             {/* Thanh Sort */}
             <div className="flex flex-wrap justify-between items-center mb-8 gap-4">
-              <p className="text-gray-500 font-medium text-sm">
-                Showing {start}–{end} of {totalProd} results
-              </p>
+              {isLoading ? (
+                <div className="h-4 w-40 bg-gray-200 rounded animate-pulse"></div>
+              ) : (
+                <p className="text-gray-500 font-medium text-sm">
+                  Showing {start}–{end} of {totalProd} results
+                </p>
+              )}
               <div className="relative">
                 <select className="border border-gray-200 rounded px-4 py-2 text-sm text-gray-600 focus:outline-none focus:border-gray-400 bg-white cursor-pointer appearance-none pr-8 relative">
                   <option>Default sorting</option>
@@ -230,24 +229,38 @@ const ShopPage = () => {
                 </svg>
               </div>
             </div>
-
-            {/* 3. HIỂN THỊ DỮ LIỆU */}
             {isLoading ? (
-              <div className="flex justify-center items-center py-20 w-full h-full">
-                <p className="text-gray-500 font-medium text-lg">
-                  Đang tải sản phẩm...
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-12">
+                {Array.from({ length: limit }).map((_, index) => (
+                  <SkeletonCard key={index} />
+                ))}
+              </div>
+            ) : products?.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <p className="text-gray-500 text-lg font-medium mb-2">
+                  No products found
                 </p>
+                <p className="text-gray-400 text-sm">
+                  Try adjusting your search or filters
+                </p>
+                <button
+                  onClick={() => {
+                    setSearch("");
+                    setFilters({});
+                    setPage(1);
+                  }}
+                  className="mt-4 px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500"
+                >
+                  Reset filters
+                </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-12">
                 {products?.map((product) => {
-                  // Xử lý linh hoạt: Nếu API có mảng images (như The Avengers) thì lấy ảnh đầu tiên
                   const displayImage =
                     product.images && product.images.length > 0
                       ? product.images[0].url
                       : product.image;
-
-                  // Hỗ trợ cả ID kiểu MongoDB (_id) và ID thường (id)
                   const productId = product._id || product.id;
 
                   return (
@@ -258,7 +271,6 @@ const ShopPage = () => {
                       title={product.title}
                       author={product.author}
                       price={product.price}
-                      // Truyền ID chuẩn xác vào các hàm trong store
                       onClickWishlist={() => userAddToWishlist(productId)}
                       onClickAddCart={async () => {
                         const productData = {
@@ -279,11 +291,8 @@ const ShopPage = () => {
                 })}
               </div>
             )}
-
-            {/* Phân trang (Pagination) */}
             <div className="flex justify-center pt-8">
               <nav className="flex items-center space-x-2">
-                {/* PREV */}
                 <button
                   disabled={page === 1}
                   onClick={() => setPage((prev) => prev - 1)}
@@ -295,8 +304,6 @@ const ShopPage = () => {
                 >
                   Prev
                 </button>
-
-                {/* ✅ PUT IT RIGHT HERE */}
                 {getPageNumbers().map((pageNumber) => (
                   <button
                     key={pageNumber}
@@ -310,8 +317,6 @@ const ShopPage = () => {
                     {pageNumber}
                   </button>
                 ))}
-
-                {/* NEXT */}
                 <button
                   disabled={page === pagination?.totalPages}
                   onClick={() => setPage((prev) => prev + 1)}
