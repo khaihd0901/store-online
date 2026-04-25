@@ -75,19 +75,17 @@ if (filterQuery.hot !== undefined) {
     ];
   }
   console.log("FINAL QUERY:", mongoQuery);
+  if (req.query.category) {
+  const category = req.query.category.split(",");
 
+  mongoQuery.category = { $in: category };
+}
   let query = Product.find(mongoQuery).populate("category");
   // ✅ add sorting
 if (req.query.sort) {
   const sortBy = req.query.sort.split(",").join(" ");
   query = query.sort(sortBy);
 }
-if (req.query.category) {
-  const category = req.query.category.split(",");
-
-  mongoQuery.category = { $in: category };
-}
-
   // pagination
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 20;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import ProductCard from "../components/ProductCard";
 import { useUserStore } from "@/stores/userStore";
 import { useProductStore } from "../stores/productStore";
+import { useDebounce } from "@/hooks/useDebounce";
 // import { useCategoryStore } from "../stores/categoryStore";
 import { useCallback } from "react";
 import Badge from "@/components/Badge";
@@ -25,7 +26,25 @@ const ShopPage = () => {
   const [sortKey, setSortKey] = useState("createdAt");
   const [sort, setSort] = useState("desc");
   const [filters, setFilters] = useState({});
+  const debouncedSearch = useDebounce(search, 500);
+  const isSearching = search !== debouncedSearch;
+  const totalProd = pagination?.total || 0;
 
+  const start = totalProd === 0 ? 0 : (page - 1) * limit + 1;
+  const end = Math.min(page * limit, totalProd);
+  const getPageNumbers = () => {
+    const total = pagination?.totalPages || 1;
+    const visible = 3;
+
+    let start = Math.max(1, page - Math.floor(visible / 2));
+    let end = Math.min(total, start + visible - 1);
+
+    if (end - start + 1 < visible) {
+      start = Math.max(1, end - visible + 1);
+    }
+
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  };
   const fetchProducts = useCallback(async () => {
     const params = {
       page,
@@ -34,16 +53,18 @@ const ShopPage = () => {
       ...filters,
     };
 
-    if (search) params.search = search;
+    if (debouncedSearch) {
+      params.search = debouncedSearch;
+    }
 
     await productSearch(params);
-  }, [page, limit, sortKey, sort, search, filters, productSearch]);
-
+  }, [page, limit, sortKey, sort, debouncedSearch, filters, productSearch]);
   useEffect(() => {
-    // categoryGetAll();
     fetchProducts();
   }, [fetchProducts]);
-
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [page]);
   return (
     <div className="bg-white ">
       <Badge to={"Our Shop"} title={"Our Shop"} />
@@ -57,6 +78,11 @@ const ShopPage = () => {
                 <input
                   type="text"
                   placeholder="Search"
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1); // reset page when searching
+                  }}
                   className="w-full px-4 py-2 outline-none bg-transparent text-gray-700 placeholder-gray-500 font-medium"
                 />
                 <button className="bg-red-400 text-white p-3 rounded-lg hover:bg-red-500 transition-colors shrink-0">
@@ -125,76 +151,6 @@ const ShopPage = () => {
                 </ul>
               </div>
 
-              {/* Thẻ (Tags) */}
-              <div className="mb-10">
-                <h3 className="font-bold text-lg mb-4 text-gray-900">Tags</h3>
-                <ul className="space-y-3 text-gray-500 text-sm font-medium">
-                  <li>
-                    <a
-                      href="#"
-                      className="hover:text-red-500 transition-colors block"
-                    >
-                      Sci-Fi
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="hover:text-red-500 transition-colors block"
-                    >
-                      Revenge
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="hover:text-red-500 transition-colors block"
-                    >
-                      Zombie
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="hover:text-red-500 transition-colors block"
-                    >
-                      Vampire
-                    </a>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Tác giả (Author) */}
-              <div className="mb-10">
-                <h3 className="font-bold text-lg mb-4 text-gray-900">Author</h3>
-                <ul className="space-y-3 text-gray-500 text-sm font-medium">
-                  <li>
-                    <a
-                      href="#"
-                      className="hover:text-red-500 transition-colors block"
-                    >
-                      Hanna Clark
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="hover:text-red-500 transition-colors block"
-                    >
-                      Albert E. Beth
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="hover:text-red-500 transition-colors block"
-                    >
-                      D.K John
-                    </a>
-                  </li>
-                </ul>
-              </div>
-
               {/* Lọc theo giá (Filter by price) */}
               <div>
                 <h3 className="font-bold text-lg mb-4 text-gray-900">
@@ -251,7 +207,7 @@ const ShopPage = () => {
             {/* Thanh Sort */}
             <div className="flex flex-wrap justify-between items-center mb-8 gap-4">
               <p className="text-gray-500 font-medium text-sm">
-                Showing results
+                Showing {start}–{end} of {totalProd} results
               </p>
               <div className="relative">
                 <select className="border border-gray-200 rounded px-4 py-2 text-sm text-gray-600 focus:outline-none focus:border-gray-400 bg-white cursor-pointer appearance-none pr-8 relative">
@@ -327,36 +283,46 @@ const ShopPage = () => {
             {/* Phân trang (Pagination) */}
             <div className="flex justify-center pt-8">
               <nav className="flex items-center space-x-2">
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-gray-900 px-3 py-2 text-sm font-semibold transition-colors"
+                {/* PREV */}
+                <button
+                  disabled={page === 1}
+                  onClick={() => setPage((prev) => prev - 1)}
+                  className={`px-3 py-2 text-sm font-semibold ${
+                    page === 1
+                      ? "text-gray-300 cursor-not-allowed"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`}
                 >
                   Prev
-                </a>
-                <a
-                  href="#"
-                  className="w-8 h-8 flex items-center justify-center rounded bg-red-400 text-white font-bold text-sm"
-                >
-                  1
-                </a>
-                <a
-                  href="#"
-                  className="w-8 h-8 flex items-center justify-center rounded text-gray-600 hover:bg-gray-100 font-bold text-sm transition-colors"
-                >
-                  2
-                </a>
-                <a
-                  href="#"
-                  className="w-8 h-8 flex items-center justify-center rounded text-gray-600 hover:bg-gray-100 font-bold text-sm transition-colors"
-                >
-                  3
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-gray-900 px-3 py-2 text-sm font-semibold transition-colors"
+                </button>
+
+                {/* ✅ PUT IT RIGHT HERE */}
+                {getPageNumbers().map((pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    onClick={() => setPage(pageNumber)}
+                    className={`w-8 h-8 flex items-center justify-center rounded text-sm font-bold ${
+                      page === pageNumber
+                        ? "bg-red-400 text-white"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                ))}
+
+                {/* NEXT */}
+                <button
+                  disabled={page === pagination?.totalPages}
+                  onClick={() => setPage((prev) => prev + 1)}
+                  className={`px-3 py-2 text-sm font-semibold ${
+                    page === pagination?.totalPages
+                      ? "text-gray-300 cursor-not-allowed"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`}
                 >
                   Next
-                </a>
+                </button>
               </nav>
             </div>
           </div>
