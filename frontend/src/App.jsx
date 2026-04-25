@@ -16,6 +16,7 @@ import Contact from "./pages/Contact.jsx";
 import { useUserStore } from "./stores/userStore.js";
 import { useEffect } from "react";
 import { useAuthStore } from "./stores/authStore.js";
+import Checkout from "./pages/Checkout.jsx";
 function App() {
   const userGetCart = useUserStore((state) => state.userGetCart);
   const userGetWishlist = useUserStore((state) => state.userGetWishlist);
@@ -49,6 +50,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/orders" element={<Order />} />
             <Route path="/wish-list" element={<WishList />} />
+            <Route path="/checkout" element={<Checkout />} />
             {/* <Route path="/cart" element={<ShoppingCart />} />
           <Route path="/wish-list" element={<WishList />} />
           <Route path="/check-out" element={<CheckOut />} />

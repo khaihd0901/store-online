@@ -61,7 +61,32 @@ const ProductSection = ({ title }) => {
             >
               {bestSellingProducts.map((product) => (
                 <SwiperSlide key={product._id}>
-                  <ProductCard 
+
+                                      <ProductCard
+                      key={product._id}
+                      id={product._id}
+                       image={product.images && product.images.length > 0 ? product.images[0].url : "/images/placeholder.png"}
+                      title={product.title}
+                      author={product.author}
+                      price={product.price}
+                      // Truyền ID chuẩn xác vào các hàm trong store
+                      onClickWishlist={() => userAddToWishlist(product._id)}
+                      onClickAddCart={async () => {
+                        const productData = {
+                          prodId: product._id,
+                          title: product.title,
+                          author: product.author,
+                          price: product.price,
+                          stock: product.stock,
+                          images:
+                            product.images && product.images.length > 0
+                              ? product.images
+                              : [{ url: product.images[0].url}],
+                        };
+                        await userAddToCart(productData);
+                      }}
+                    />
+                  {/* <ProductCard 
                     id={product._id}
                     title={product.title}
                     author={product.author}
@@ -79,7 +104,7 @@ const ProductSection = ({ title }) => {
                         ],
                       })
                     }
-                  />
+                  /> */}
                 </SwiperSlide>
               ))}
             </Swiper>

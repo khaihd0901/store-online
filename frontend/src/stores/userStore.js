@@ -189,7 +189,7 @@ userAddToCart: async (product) => {
           ...guestCart,
           {
             prodId: product.prodId,
-            quantity: 1,
+            quantity: product.quantity || 1,
             price: product.price,
             prodData: {
               title: product.title,
