@@ -6,25 +6,31 @@ const steps = [
 
 const StepBar = ({ currentStep, onStepChange }) => {
   return (
-    <div className="w-full flex items-center justify-between mb-10">
+    <div className="w-full flex items-center justify-between mb-2">
       {steps.map((step, index) => {
         const isActive = currentStep === step.id;
         const isCompleted = currentStep > step.id;
 
         return (
-          <div key={step.id} className="flex-1 flex items-center">
+          <div key={step.id} className="flex-1 flex items-center mb-5">
             <div className="flex flex-col items-center w-full relative">
+              
               {/* STEP CIRCLE */}
               <div
                 onClick={() => {
+                  if (currentStep === 3) return; // 🚫 BLOCK SUCCESS
                   if (step.id < currentStep) {
                     onStepChange(step.id);
                   }
                 }}
-                className={`w-10 h-10 flex items-center justify-center rounded-full border-2 font-semibold transition-all
+                className={`w-8 h-8 flex items-center justify-center rounded-full border-2 font-semibold transition-all
                 ${
                   isCompleted
-                    ? "bg-green-500 border-green-500 text-white cursor-pointer hover:scale-105"
+                    ? `bg-green-500 border-green-500 text-white ${
+                        currentStep === 3
+                          ? "cursor-not-allowed opacity-70"
+                          : "cursor-pointer hover:scale-105"
+                      }`
                     : isActive
                       ? "border-red-500 text-red-500"
                       : "border-gray-300 text-gray-400 cursor-not-allowed"

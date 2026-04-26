@@ -39,64 +39,72 @@ export default function WishList() {
         {/* Wishlist Items */}
         {wishlist?.length > 0 && (
           <div className="grid md:grid-cols-4 sm:grid-cols-2 gap-6">
-            {wishlist.map((item) => (
-              <div
-                key={item._id}
-                className="bg-white rounded-2xl shadow hover:shadow-md transition p-4"
-              >
-                <img
-                  src={item.images[0].url}
-                  alt={item.title}
-                  className="h-48 mx-auto object-cover rounded-lg mb-3"
-                />
+            {wishlist.map((item) => {
+              const displayImage =
+                item.images && item.images.length > 0
+                  ? item.images[0].url
+                  : item.image;
+              return (
+                <div
+                  key={item._id}
+                  className="bg-white rounded-2xl shadow hover:shadow-md transition p-4"
+                >
+                  <img
+                    src={item.images[0].url}
+                    alt={item.title}
+                    className="h-48 mx-auto object-cover rounded-lg mb-3"
+                  />
 
-                <h3 className="font-semibold text-sm line-clamp-2">
-                  {item.title}
-                </h3>
-                <p className="text-xs text-gray-500 mb-2">{item.author}</p>
+                  <h3 className="font-semibold text-sm line-clamp-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-gray-500 mb-2">{item.author}</p>
 
-                <p className="font-medium mb-3">{item.price}</p>
+                  <p className="font-medium mb-3">{item.price} $</p>
 
-                {/* Actions */}
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    disabled={item.stock === 0}
-                    onClick={() => {
-                      if (item.stock === 0) return;
-
-                      userAddToCart({
-                        cart: [
-                          {
-                            prodId: item._id,
-                            quantity: 1,
-                          },
-                        ],
-                      });
-                    }}
-                    className={`flex-1 py-2 rounded-lg text-sm transition
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={item.stock === 0}
+                      onClick={async () => {
+                        const productData = {
+                          prodId: item._id,
+                          title: item.title,
+                          author: item.author,
+                          price: item.price,
+                          stock: item.stock,
+                          images:
+                            item.images && item.images.length > 0
+                              ? item.images
+                              : [{ url: displayImage }],
+                        };
+                        await userAddToCart(productData);
+                      }}
+                      className={`flex-1 py-2 rounded-lg text-sm transition
     ${
       item.stock === 0
         ? "bg-red-500 cursor-not-allowed text-white"
         : "bg-black text-white hover:bg-gray-800"
     }
   `}
-                  >
-                    {item.stock === 0 ? "Out of Stock" : "Add to Cart"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedId(item._id);
-                      setShowConfirm(true);
-                    }}
-                    className="px-3 py-2 border rounded-lg text-red-500 hover:bg-red-50"
-                  >
-                    ✕
-                  </button>
+                    >
+                      {item.stock === 0 ? "Out of Stock" : "Add to Cart"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedId(item._id);
+                        setShowConfirm(true);
+                      }}
+                      className="px-3 py-2 border rounded-lg text-red-500 hover:bg-red-50"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

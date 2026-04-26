@@ -3,6 +3,7 @@ import userService from "@/services/userService";
 import { getGuestCart, saveGuestCart, clearGuestCart } from "@/utils/guestCart";
 import { toast } from "sonner";
 import { useAuthStore } from "@/stores/authStore";
+import { getErrorMessage } from "@/utils/errorHandler";
 
 export const useUserStore = create((set, get) => ({
   isLoading: false,
@@ -10,12 +11,16 @@ export const useUserStore = create((set, get) => ({
   success: null,
   step: 1,
   email: "",
-  wishlist: [], 
+  wishlist: [],
   carts: [],
   cartCount: 0,
   wishlistCount: 0,
   order: null,
-
+  handleError: (err) => {
+    const message = getErrorMessage(err);
+    set({ isLoading: false, error: message });
+    toast.error(message);
+  },
   clearState: () => {
     set({
       step: 1,
@@ -161,8 +166,6 @@ export const useUserStore = create((set, get) => ({
         cartCount: res.items.length,
       });
     } catch (err) {
-      toast.error("Something went wrong !!!");
-
       set({
         isLoading: false,
         error: err.response?.data?.message || "Failed to get cart",
@@ -308,11 +311,12 @@ export const useUserStore = create((set, get) => ({
 
       toast.success("Coupon applied successfully");
     } catch (err) {
+      console.log(err.response)
       set({
         isLoading: false,
         error: err.response?.data?.message || "Failed to apply coupon",
       });
-      toast.error(err.response?.data?.message || "Invalid coupon");
+      get().handleError(err);
     }
   },
   userCreateOrder: async (data) => {
@@ -320,11 +324,12 @@ export const useUserStore = create((set, get) => ({
       set({ isLoading: true, error: null });
 
       const res = await userService.userCreateOrder(data);
-
       set({
         isLoading: false,
         success: res.message,
         order: res.order,
+        carts: [],
+        cartCount: 0,
       });
 
       toast.success("Order placed successfully 🎉");
@@ -336,23 +341,23 @@ export const useUserStore = create((set, get) => ({
         error: err.response?.data?.message || "Failed to create order",
       });
 
-      toast.error(err.response?.data?.message || "Order failed");
+      get().handleError(err);
     }
   },
-userRemoveCoupon: async () => {
-  try {
-    await userService.userRemoveCoupon();
+  userRemoveCoupon: async () => {
+    try {
+      await userService.userRemoveCoupon();
 
-    set((state) => ({
-      carts: {
-        ...state.carts,
-        totalAfterDiscount: null,
-        appliedCoupon: null,
-        discount: 0,
-      },
-    }));
-  } catch (err) {
-    console.log(err);
-  }
-},
+      set((state) => ({
+        carts: {
+          ...state.carts,
+          totalAfterDiscount: null,
+          appliedCoupon: null,
+          discount: 0,
+        },
+      }));
+    } catch (err) {
+      console.log(err);
+    }
+  },
 }));
