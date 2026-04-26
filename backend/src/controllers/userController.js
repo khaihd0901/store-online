@@ -9,13 +9,13 @@ import Order from "../models/Order.js";
 import crypto from "crypto";
 import mongoose from "mongoose";
 
-
 // ============================
 // GET ALL USERS
 // ============================
 export const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({ isAdmin: false, isDeleted: false })
-    .select("-hashedPassword");
+  const users = await User.find({ isAdmin: false, isDeleted: false }).select(
+    "-hashedPassword",
+  );
 
   res.status(200).json(users);
 });
@@ -50,14 +50,10 @@ export const updateUser = asyncHandler(async (req, res) => {
     fullName: `${firstName} ${lastName}`,
   };
 
-  const user = await User.findByIdAndUpdate(
-    req.params.id,
-    updateData,
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
+  const user = await User.findByIdAndUpdate(req.params.id, updateData, {
+    new: true,
+    runValidators: true,
+  });
 
   if (!user) {
     res.status(404);
@@ -86,7 +82,7 @@ export const addAddress = asyncHandler(async (req, res) => {
 export const setDefaultAddress = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
 
-  user.addresses.forEach(addr => {
+  user.addresses.forEach((addr) => {
     addr.isDefault = addr._id.toString() === req.params.id;
   });
 
@@ -95,17 +91,17 @@ export const setDefaultAddress = asyncHandler(async (req, res) => {
 });
 
 export const deleteAddress = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user.id);
+  const user = await User.findById(req.user.id);
 
   if (user.addresses.length <= 1) {
     return res.status(400).json({ message: "Must have at least 1 address" });
   }
   const wasDefault = user.addresses.find(
-    a => a._id.toString() === req.params.id
+    (a) => a._id.toString() === req.params.id,
   )?.isDefault;
 
   user.addresses = user.addresses.filter(
-    addr => addr._id.toString() !== req.params.id
+    (addr) => addr._id.toString() !== req.params.id,
   );
 
   if (wasDefault) {
@@ -119,7 +115,7 @@ export const deleteAddress = asyncHandler(async (req, res) => {
 export const getAddresses = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
   res.json(user.addresses);
-})
+});
 // ============================
 // SOFT DELETE USER
 // ============================
@@ -131,7 +127,7 @@ export const softDeleteUser = asyncHandler(async (req, res) => {
       isDeleted: true,
       deletedAt: new Date(),
     },
-    { new: true }
+    { new: true },
   );
 
   if (!user) {
@@ -149,11 +145,11 @@ export const restoreUser = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
     {
-      isLocked:false,
+      isLocked: false,
       isDeleted: false,
       deletedAt: null,
     },
-    { new: true }
+    { new: true },
   );
 
   if (!user) {
@@ -264,7 +260,7 @@ export const forgotPasswordOTP = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Email sent successfully" });
 });
 export const verifyOTP = asyncHandler(async (req, res) => {
-  const {OTP,email}= req.body
+  const { OTP, email } = req.body;
   const hashedOTP = crypto.createHash("sha256").update(OTP).digest("hex");
 
   const user = await User.findOne({
@@ -283,8 +279,8 @@ export const verifyOTP = asyncHandler(async (req, res) => {
 // RESET PASSWORD
 // ============================
 export const resetPassword = asyncHandler(async (req, res) => {
-  const { password, OTP,email } = req.body;
-console.log(req.body)
+  const { password, OTP, email } = req.body;
+  console.log(req.body);
   const hashedOTP = crypto.createHash("sha256").update(OTP).digest("hex");
 
   const user = await User.findOne({
@@ -327,7 +323,7 @@ export const addToWishlist = asyncHandler(async (req, res) => {
       message: "User not found",
     });
   }
-  const alreadyAdded = user.wishList.some(id => id.equals(prodId));
+  const alreadyAdded = user.wishList.some((id) => id.equals(prodId));
   const update = alreadyAdded
     ? { $pull: { wishList: prodId } }
     : { $addToSet: { wishList: prodId } };
@@ -347,7 +343,7 @@ export const addToWishlist = asyncHandler(async (req, res) => {
 // ============================
 export const removeFromWishlist = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  const  {prodId}  = req.body;
+  const { prodId } = req.body;
   if (!mongoose.Types.ObjectId.isValid(prodId)) {
     return res.status(400).json({ message: "Invalid product ID" });
   }
@@ -355,7 +351,7 @@ export const removeFromWishlist = asyncHandler(async (req, res) => {
   const updatedUser = await User.findByIdAndUpdate(
     _id,
     { $pull: { wishList: prodId } },
-    { new: true }
+    { new: true },
   ).populate("wishList");
 
   if (!updatedUser) {
@@ -374,11 +370,10 @@ export const removeFromWishlist = asyncHandler(async (req, res) => {
 // ============================
 export const getWishlist = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  const wishList = await User.findById(_id).select("wishList")
-  .populate({
-      path: "wishList",
-      model: "Product",
-    });
+  const wishList = await User.findById(_id).select("wishList").populate({
+    path: "wishList",
+    model: "Product",
+  });
   res.status(200).json(wishList);
 });
 
@@ -415,9 +410,7 @@ export const userCart = asyncHandler(async (req, res) => {
   }
 
   // ✅ Check existing item
-  const index = userCart.items.findIndex(
-    (i) => i.prodId.toString() === prodId
-  );
+  const index = userCart.items.findIndex((i) => i.prodId.toString() === prodId);
 
   if (index > -1) {
     // 🔥 Update quantity
@@ -435,15 +428,16 @@ export const userCart = asyncHandler(async (req, res) => {
   // ✅ Recalculate total
   userCart.cartTotal = userCart.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
-    0
+    0,
   );
 
-await userCart.save();
+  await userCart.save();
 
-const populatedCart = await Cart.findOne({ orderBy: _id })
-  .populate("items.prodId");
+  const populatedCart = await Cart.findOne({ orderBy: _id }).populate(
+    "items.prodId",
+  );
 
-res.status(200).json(populatedCart);
+  res.status(200).json(populatedCart);
 });
 // ============================
 // MERGE CART
@@ -467,7 +461,7 @@ export const mergeCart = async (req, res) => {
 
   guestCart.forEach((guestItem) => {
     const existing = cart.items.find(
-      (item) => item.prodId.toString() === guestItem.prodId
+      (item) => item.prodId.toString() === guestItem.prodId,
     );
 
     if (existing) {
@@ -484,15 +478,16 @@ export const mergeCart = async (req, res) => {
   // 🔥 recalc total
   cart.cartTotal = cart.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
-    0
+    0,
   );
 
   await cart.save();
 
-  const populatedCart = await Cart.findOne({ orderBy: userId })
-  .populate("items.prodId");
+  const populatedCart = await Cart.findOne({ orderBy: userId }).populate(
+    "items.prodId",
+  );
 
-res.status(200).json(populatedCart);
+  res.status(200).json(populatedCart);
 };
 // ============================
 // GET USER CART
@@ -521,10 +516,10 @@ export const updateCartItemQuantity = asyncHandler(async (req, res) => {
   }
 
   if (quantity > product.stock) {
-  return res.status(400).json({
-    message: `Only ${product.stock} items in stock`,
-  });
-}
+    return res.status(400).json({
+      message: `Only ${product.stock} items in stock`,
+    });
+  }
   if (quantity < 1) {
     return res.status(400).json({ message: "Quantity must be >= 1" });
   }
@@ -536,7 +531,7 @@ export const updateCartItemQuantity = asyncHandler(async (req, res) => {
   }
 
   const itemIndex = cart.items.findIndex(
-    (item) => item.prodId.toString() === prodId
+    (item) => item.prodId.toString() === prodId,
   );
 
   if (itemIndex === -1) {
@@ -548,7 +543,7 @@ export const updateCartItemQuantity = asyncHandler(async (req, res) => {
   // 🔄 Recalculate total
   cart.cartTotal = cart.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
-    0
+    0,
   );
 
   // reset coupon
@@ -582,13 +577,11 @@ export const removeFromCart = asyncHandler(async (req, res) => {
   }
 
   const initialLength = cart.items.length;
-  cart.items = cart.items.filter(
-    (item) => !item.prodId.equals(prodId)
-  );
+  cart.items = cart.items.filter((item) => !item.prodId.equals(prodId));
 
   cart.cartTotal = cart.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
-    0
+    0,
   );
 
   cart.totalAfterDiscount = undefined;
@@ -625,9 +618,27 @@ export const applyCoupon = asyncHandler(async (req, res) => {
 
   const couponCode = coupon.trim().toUpperCase();
 
+  // ✅ GET CART FIRST
+  const cart = await Cart.findOne({ orderBy: _id });
+  if (!cart) {
+    res.status(404);
+    throw new Error("Cart not found");
+  }
+
+  if (!cart.items || cart.items.length === 0) {
+    res.status(400);
+    throw new Error("Cart is empty");
+  }
+
+  // ✅ CHECK already applied
+  if (cart.appliedCoupon === couponCode) {
+    res.status(400);
+    throw new Error("Coupon already applied");
+  }
+
+  // ✅ FIND COUPON
   const validCoupon = await Coupon.findOne({ code: couponCode });
 
-  // ❌ Validate coupon
   if (!validCoupon) {
     res.status(404);
     throw new Error("Coupon not found");
@@ -651,30 +662,50 @@ export const applyCoupon = asyncHandler(async (req, res) => {
     throw new Error("Coupon usage limit reached");
   }
 
-  const cart = await Cart.findOne({ orderBy: _id });
-  if (!cart) {
-    res.status(404);
-    throw new Error("Cart not found");
-  }
   if (cart.cartTotal < validCoupon.minPurchaseAmount) {
     res.status(400);
     throw new Error(
       `Minimum purchase amount is ${validCoupon.minPurchaseAmount}`
     );
   }
+
+  // ✅ REMOVE OLD COUPON (if switching)
+  if (cart.appliedCoupon && cart.appliedCoupon !== couponCode) {
+    const oldCoupon = await Coupon.findOne({ code: cart.appliedCoupon });
+    if (oldCoupon) {
+      oldCoupon.currentUses -= 1;
+      await oldCoupon.save();
+    }
+  }
+
+  // ✅ CALCULATE DISCOUNT
   let discount = 0;
 
   if (validCoupon.discountType === "percentage") {
     discount = (cart.cartTotal * validCoupon.discountValue) / 100;
+
+    if (validCoupon.maxDiscount) {
+      discount = Math.min(discount, validCoupon.maxDiscount);
+    }
   } else {
     discount = validCoupon.discountValue;
   }
 
-  const totalAfterDiscount = Math.max(0, cart.cartTotal - discount);
+  discount = Math.round(discount);
 
+  const totalAfterDiscount = Math.max(
+    0,
+    Math.round(cart.cartTotal - discount)
+  );
+
+  // ✅ SAVE CART
   cart.totalAfterDiscount = totalAfterDiscount;
-  cart.appliedCoupon = couponCode; // 🔥 IMPORTANT
+  cart.appliedCoupon = couponCode;
   await cart.save();
+
+  // ✅ INCREASE USAGE
+  validCoupon.currentUses += 1;
+  await validCoupon.save();
 
   res.status(200).json({
     success: true,
@@ -683,7 +714,23 @@ export const applyCoupon = asyncHandler(async (req, res) => {
     totalAfterDiscount,
   });
 });
+// removeCoupon.js
+export const removeCoupon = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
 
+  const cart = await Cart.findOne({ orderBy: _id });
+  if (!cart) throw new Error("Cart not found");
+
+  cart.appliedCoupon = null;
+  cart.totalAfterDiscount = null;
+
+  await cart.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Coupon removed",
+  });
+});
 // ============================
 // CREATE ORDER
 // ============================
@@ -692,25 +739,36 @@ export const createOrder = asyncHandler(async (req, res) => {
   session.startTransaction();
 
   try {
-    const { COD, couponApplied, addressId } = req.body;
+    const { COD, addressId } = req.body;
     const { _id } = req.user;
 
     if (!COD) {
-      throw new Error("Create cash order failed");
+      throw new Error("Only COD payment is supported");
     }
 
-    // ✅ get user + address
+    // =========================
+    // 1. GET USER + ADDRESS
+    // =========================
     const user = await User.findById(_id).session(session);
     if (!user) throw new Error("User not found");
 
     const address = user.addresses.id(addressId);
     if (!address) throw new Error("Address not found");
 
-    const userCart = await Cart.findOne({ orderBy: _id }).session(session);
-    if (!userCart) throw new Error("Cart not found");
+    // =========================
+    // 2. GET CART
+    // =========================
+    const cart = await Cart.findOne({ orderBy: _id }).session(session);
+    if (!cart) throw new Error("Cart not found");
 
-    // ✅ check stock
-    for (const item of userCart.items) {
+    if (!cart.items || cart.items.length === 0) {
+      throw new Error("Cart is empty");
+    }
+
+    // =========================
+    // 3. CHECK STOCK
+    // =========================
+    for (const item of cart.items) {
       const product = await Product.findById(item.prodId).session(session);
 
       if (!product || product.stock < item.quantity) {
@@ -718,23 +776,40 @@ export const createOrder = asyncHandler(async (req, res) => {
       }
     }
 
-    // 💰 calculate total
-    const finalAmount =
-      couponApplied && userCart.totalAfterDiscount
-        ? userCart.totalAfterDiscount
-        : userCart.cartTotal;
+    // =========================
+    // 4. CALCULATE TOTAL
+    // =========================
+    const shippingFee = 5;
 
-    // ✅ create order WITH SHIPPING ADDRESS
+    const hasCoupon = cart.appliedCoupon && cart.totalAfterDiscount;
+
+    const finalAmount = hasCoupon
+      ? cart.totalAfterDiscount + shippingFee
+      : cart.cartTotal + shippingFee;
+
+    const discount = hasCoupon
+      ? cart.cartTotal - cart.totalAfterDiscount
+      : 0;
+
+    // =========================
+    // 5. CREATE ORDER
+    // =========================
     const order = await Order.create(
       [
         {
           orderBy: _id,
-          items: userCart.items,
+          items: cart.items,
           totalAmount: finalAmount,
           orderStatus: "Processing",
 
-          // 🔥 ADD THIS
+          coupon: cart.appliedCoupon || null,
+          discount,
+
+          shippingFee,
+
           shippingAddress: {
+            fullName: address.fullName,
+            phone: address.phone,
             street: address.street,
             provinceName: address.provinceName,
             districtName: address.districtName,
@@ -751,8 +826,10 @@ export const createOrder = asyncHandler(async (req, res) => {
       { session }
     );
 
-    // ✅ update stock
-    const updates = userCart.items.map((item) => ({
+    // =========================
+    // 6. UPDATE STOCK
+    // =========================
+    const updates = cart.items.map((item) => ({
       updateOne: {
         filter: { _id: item.prodId },
         update: [
@@ -775,16 +852,35 @@ export const createOrder = asyncHandler(async (req, res) => {
 
     await Product.bulkWrite(updates, { session });
 
-    // ✅ clear cart
+    // =========================
+    // 7. UPDATE COUPON USAGE
+    // =========================
+    if (cart.appliedCoupon) {
+      const coupon = await Coupon.findOne({
+        code: cart.appliedCoupon,
+      }).session(session);
+
+      if (coupon) {
+        coupon.currentUses += 1;
+        await coupon.save({ session });
+      }
+    }
+
+    // =========================
+    // 8. CLEAR CART
+    // =========================
     await Cart.findOneAndDelete({ orderBy: _id }).session(session);
 
+    // =========================
+    // 9. COMMIT
+    // =========================
     await session.commitTransaction();
 
     res.status(200).json({
+      success: true,
       message: "Order created successfully",
-      order,
+      order: order[0],
     });
-
   } catch (error) {
     await session.abortTransaction();
     throw error;
@@ -821,11 +917,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   const { id } = req.params;
 
-  const order = await Order.findByIdAndUpdate(
-    id,
-    { status },
-    { new: true }
-  );
+  const order = await Order.findByIdAndUpdate(id, { status }, { new: true });
 
   res.status(200).json(order);
 });

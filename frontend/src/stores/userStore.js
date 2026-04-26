@@ -10,10 +10,11 @@ export const useUserStore = create((set, get) => ({
   success: null,
   step: 1,
   email: "",
-  wishlist: [],
+  wishlist: [], 
   carts: [],
   cartCount: 0,
   wishlistCount: 0,
+  order: null,
 
   clearState: () => {
     set({
@@ -25,6 +26,7 @@ export const useUserStore = create((set, get) => ({
       wishlistCount: 0,
       carts: [],
       wishlist: [],
+      order: null,
     });
   },
   userUpdate: async (id, data) => {
@@ -167,84 +169,81 @@ export const useUserStore = create((set, get) => ({
       });
     }
   },
-userAddToCart: async (product) => {
+  userAddToCart: async (product) => {
+    try {
+      const { user } = useAuthStore.getState();
+      if (!user) {
+        let guestCart = getGuestCart();
 
-  try {
-    const { user } = useAuthStore.getState();
-    if (!user) {
-      let guestCart = getGuestCart();
-
-      const existIndex = guestCart.findIndex(
-        (i) => i.prodId === product.prodId
-      );
-
-      if (existIndex > -1) {
-        guestCart = guestCart.map((item, index) =>
-          index === existIndex
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
+        const existIndex = guestCart.findIndex(
+          (i) => i.prodId === product.prodId,
         );
-      } else {
-        guestCart = [
-          ...guestCart,
-          {
-            prodId: product.prodId,
-            quantity: product.quantity || 1,
-            price: product.price,
-            prodData: {
-              title: product.title,
-              author: product.author,
-              stock: product.stock || 999,
-              images:
-                product.images?.length > 0
-                  ? product.images
-                  : [{ url: product.image || "/placeholder.png" }],
+
+        if (existIndex > -1) {
+          guestCart = guestCart.map((item, index) =>
+            index === existIndex
+              ? { ...item, quantity: item.quantity + 1 }
+              : item,
+          );
+        } else {
+          guestCart = [
+            ...guestCart,
+            {
+              prodId: product.prodId,
+              quantity: product.quantity || 1,
+              price: product.price,
+              prodData: {
+                title: product.title,
+                author: product.author,
+                stock: product.stock || 999,
+                images:
+                  product.images?.length > 0
+                    ? product.images
+                    : [{ url: product.image || "/placeholder.png" }],
+              },
             },
+          ];
+        }
+
+        saveGuestCart(guestCart);
+
+        const cartTotal = guestCart.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0,
+        );
+
+        const cartCount = guestCart.length;
+
+        set({
+          carts: {
+            items: [...guestCart],
+            cartTotal,
           },
-        ];
+          cartCount,
+        });
+        toast.success("Add to cart success");
+        return;
       }
 
-      saveGuestCart(guestCart);
+      const res = await userService.userAddToCart({
+        prodId: product.prodId,
+        quantity: 1,
+      });
 
-      const cartTotal = guestCart.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      );
-
-      const cartCount = guestCart.length;
+      const cartCount = res?.items?.length || 0;
 
       set({
-        carts: {
-          items: [...guestCart], 
-          cartTotal,
-        },
+        carts: res,
         cartCount,
       });
-      toast.success("Add to cart success")
-      return;
+      toast.success("Add to cart success");
+    } catch (error) {
+      toast.error("ADD TO CART ERROR:", error);
+      if (error.response?.data?.message) {
+        toast.error("Server message:", error.response.data.message);
+      }
     }
-
-
-    const res = await userService.userAddToCart({
-      prodId: product.prodId,
-      quantity: 1,
-    });
-
-    const cartCount = res?.items?.length || 0;
-
-    set({
-      carts: res,
-      cartCount,
-    });
-    toast.success("Add to cart success")
-
-  } catch (error) {
-    toast.error("ADD TO CART ERROR:", error);
-    if (error.response?.data?.message) {
-      toast.error("Server message:", error.response.data.message);
-    }
-  }
-},
+  },
   userRemoveItemFromCart: async (prodId) => {
     try {
       set({ isLoading: true, error: null });
@@ -290,4 +289,70 @@ userAddToCart: async (product) => {
 
     clearGuestCart();
   },
+  userApplyCoupon: async (coupon) => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const res = await userService.userApplyCoupon(coupon);
+
+      set((state) => ({
+        isLoading: false,
+        success: "Coupon applied",
+        carts: {
+          ...state.carts,
+          totalAfterDiscount: res.totalAfterDiscount,
+          appliedCoupon: res.coupon,
+          discount: res.discount,
+        },
+      }));
+
+      toast.success("Coupon applied successfully");
+    } catch (err) {
+      set({
+        isLoading: false,
+        error: err.response?.data?.message || "Failed to apply coupon",
+      });
+      toast.error(err.response?.data?.message || "Invalid coupon");
+    }
+  },
+  userCreateOrder: async (data) => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const res = await userService.userCreateOrder(data);
+
+      set({
+        isLoading: false,
+        success: res.message,
+        order: res.order,
+      });
+
+      toast.success("Order placed successfully 🎉");
+
+      return res; // optional (useful for redirect)
+    } catch (err) {
+      set({
+        isLoading: false,
+        error: err.response?.data?.message || "Failed to create order",
+      });
+
+      toast.error(err.response?.data?.message || "Order failed");
+    }
+  },
+userRemoveCoupon: async () => {
+  try {
+    await userService.userRemoveCoupon();
+
+    set((state) => ({
+      carts: {
+        ...state.carts,
+        totalAfterDiscount: null,
+        appliedCoupon: null,
+        discount: 0,
+      },
+    }));
+  } catch (err) {
+    console.log(err);
+  }
+},
 }));

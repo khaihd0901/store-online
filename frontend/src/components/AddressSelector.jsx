@@ -6,6 +6,7 @@ import locationService from "@/services/locationService";
 export default function AddressSelector({
   values,
   setFieldValue,
+  disabled = false,
 }) {
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
@@ -106,9 +107,9 @@ export default function AddressSelector({
           <select
             value={values.provinceCode || ""}
             onChange={handleProvinceChange}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm
-            focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none
-            transition"
+             disabled={disabled}
+            className={`border border-gray-300 rounded-lg px-3 py-2
+          focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none transition ${disabled && "cursor-not-allowed"}`}
           >
             <option value="" className="text-sm">Select province</option>
             {provinces.map((p) => (
@@ -127,10 +128,9 @@ export default function AddressSelector({
           <select
             value={values.districtCode || ""}
             onChange={handleDistrictChange}
-            disabled={!values.provinceCode}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm
-            focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none
-            disabled:bg-gray-100 transition"
+            disabled={!values.provinceCode || disabled}
+            className={`border border-gray-300 rounded-lg px-3 py-2
+          focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none transition ${disabled && "cursor-not-allowed"}`}
           >
             <option value="" className="text-sm">
               {loadingDistricts ? "Loading..." : "Select district"}
@@ -151,10 +151,9 @@ export default function AddressSelector({
           <select
             value={values.wardCode || ""}
             onChange={handleWardChange}
-            disabled={!values.districtCode}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm
-            focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none
-            disabled:bg-gray-100 transition"
+            disabled={!values.districtCode || disabled}
+            className={`border border-gray-300 rounded-lg px-3 py-2
+          focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none transition ${disabled && "cursor-not-allowed"}`}
           >
             <option value="" className="text-sm">
               {loadingWards ? "Loading..." : "Select ward"}
@@ -176,10 +175,11 @@ export default function AddressSelector({
         <input
           name="street"
           value={values.street || ""}
+           disabled={disabled}
           onChange={(e) => setFieldValue("street", e.target.value)}
           placeholder="House number, street name..."
-          className="border border-gray-300 rounded-lg px-3 py-2
-          focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none transition"
+          className={`border border-gray-300 rounded-lg px-3 py-2
+          focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none transition ${disabled && "cursor-not-allowed"}`}
         />
       </div>
     </div>
