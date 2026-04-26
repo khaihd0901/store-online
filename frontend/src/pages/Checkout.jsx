@@ -7,21 +7,21 @@ import { useFormik } from "formik";
 import AddressSelector from "@/components/AddressSelector";
 import { Navigate } from "react-router";
 import { toast } from "sonner";
-const Checkout = () => {
+const Checkout = ({ setStep }) => {
   const { userApplyCoupon, carts, isLoading, userCreateOrder } = useUserStore();
   const { user } = useAuthStore();
   const [couponCode, setCouponCode] = useState("");
-  const [selectedAddressId, setSelectedAddressId] = useState(null);
-  const checkoutSchema = Yup.object({
-    name: Yup.string().required("Full name is required"),
-    email: Yup.string().email("Invalid email").required("Email is required"),
-    phone: Yup.string().required("Phone is required"),
+  const [selectedAddressId, setSelectedAddressId] = useState("");
+const checkoutSchema = Yup.object({
+  fullName: Yup.string().required("Full name is required"),
+  email: Yup.string().email("Invalid email").required("Email is required"),
+  phone: Yup.string().required("Phone is required"),
 
-    provinceCode: Yup.string().required("Select province"),
-    districtCode: Yup.string().required("Select district"),
-    wardCode: Yup.string().required("Select ward"),
-    street: Yup.string().required("Street is required"),
-  });
+  provinceCode: Yup.string().required("Select province"),
+  districtCode: Yup.string().required("Select district"),
+  wardCode: Yup.string().required("Select ward"),
+  street: Yup.string().required("Street is required"),
+});
 
   const formik = useFormik({
     initialValues: {
@@ -46,29 +46,33 @@ const Checkout = () => {
       }
 
       const res = await userCreateOrder({
-        COD: true,
         addressId: selectedAddressId,
       });
 
       if (res?.success) {
-        Navigate("/order-success");
+        setStep(3); // ✅ move to success step
       }
     },
   });
 
-const subtotal =
-  carts.items?.reduce((acc, item) => acc + item.price * item.quantity, 0) || 0;
+  const subtotal =
+    carts.items?.reduce((acc, item) => acc + item.price * item.quantity, 0) ||
+    0;
 
-const shipping = 5;
+  const shipping = 5;
 
-const total =
-  carts?.totalAfterDiscount != null
-    ? carts.totalAfterDiscount + shipping
-    : subtotal + shipping;
+  const total =
+    carts?.totalAfterDiscount != null
+      ? carts.totalAfterDiscount + shipping
+      : subtotal + shipping;
   useEffect(() => {
     if (!user) return;
+
     const addr =
       user.addresses?.find((a) => a.isDefault) || user.addresses?.[0];
+
+    if (!addr) return;
+
     setSelectedAddressId(addr._id);
 
     formik.setValues({
@@ -76,13 +80,13 @@ const total =
       email: user.email || "",
       phone: user.phone || "",
 
-      provinceCode: addr?.provinceCode || "",
-      provinceName: addr?.provinceName || "",
-      districtCode: addr?.districtCode || "",
-      districtName: addr?.districtName || "",
-      wardCode: addr?.wardCode || "",
-      wardName: addr?.wardName || "",
-      street: addr?.street || "",
+      provinceCode: addr.provinceCode || "",
+      provinceName: addr.provinceName || "",
+      districtCode: addr.districtCode || "",
+      districtName: addr.districtName || "",
+      wardCode: addr.wardCode || "",
+      wardName: addr.wardName || "",
+      street: addr.street || "",
     });
   }, [user]);
   const handleApplyCoupon = async () => {
@@ -92,7 +96,7 @@ const total =
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-10">
+    <div className="min-h-screen ">
       <form
         onSubmit={formik.handleSubmit}
         className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-10 px-4"
@@ -158,7 +162,7 @@ const total =
               </label>
 
               <select
-                value={selectedAddressId}
+                value={selectedAddressId || ""}
                 onChange={(e) => {
                   const id = e.target.value;
                   setSelectedAddressId(id);
@@ -182,7 +186,8 @@ const total =
               >
                 {user?.addresses?.map((addr) => (
                   <option key={addr._id} value={addr._id}>
-                    {addr.street}, {addr.wardName}, {addr.districtName}, {addr.provinceName}
+                    {addr.street}, {addr.wardName}, {addr.districtName},{" "}
+                    {addr.provinceName}
                   </option>
                 ))}
               </select>
@@ -255,15 +260,15 @@ const total =
               <span>Shipping</span>
               <span>${shipping}</span>
             </div>
-<div className="flex justify-between text-red-500">
-  <span>Discount</span>
-  <span>
-    -$
-    {carts?.totalAfterDiscount
-      ? subtotal - carts.totalAfterDiscount
-      : 0}
-  </span>
-</div>
+            <div className="flex justify-between text-red-500">
+              <span>Discount</span>
+              <span>
+                -$
+                {carts?.totalAfterDiscount
+                  ? subtotal - carts.totalAfterDiscount
+                  : 0}
+              </span>
+            </div>
             <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
               <span>${total}</span>
@@ -272,7 +277,7 @@ const total =
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !selectedAddressId}
             className="w-full mt-6 bg-red-400 text-white py-3 rounded-xl font-medium hover:bg-red-500 disabled:bg-gray-300"
           >
             {isLoading ? "Processing..." : "Pay Now"}

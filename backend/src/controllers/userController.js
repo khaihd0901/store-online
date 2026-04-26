@@ -638,7 +638,14 @@ export const applyCoupon = asyncHandler(async (req, res) => {
 
   // ✅ FIND COUPON
   const validCoupon = await Coupon.findOne({ code: couponCode });
+  const alreadyUsed = validCoupon.usedBy.some(
+    (id) => id.toString() === _id.toString(),
+  );
 
+  if (alreadyUsed) {
+    res.status(400);
+    throw new Error("You have already used this coupon");
+  }
   if (!validCoupon) {
     res.status(404);
     throw new Error("Coupon not found");
@@ -654,10 +661,7 @@ export const applyCoupon = asyncHandler(async (req, res) => {
     throw new Error("Coupon expired");
   }
 
-  if (
-    validCoupon.maxUses &&
-    validCoupon.currentUses >= validCoupon.maxUses
-  ) {
+  if (validCoupon.maxUses && validCoupon.currentUses >= validCoupon.maxUses) {
     res.status(400);
     throw new Error("Coupon usage limit reached");
   }
@@ -665,7 +669,7 @@ export const applyCoupon = asyncHandler(async (req, res) => {
   if (cart.cartTotal < validCoupon.minPurchaseAmount) {
     res.status(400);
     throw new Error(
-      `Minimum purchase amount is ${validCoupon.minPurchaseAmount}`
+      `Minimum purchase amount is ${validCoupon.minPurchaseAmount}`,
     );
   }
 
@@ -693,10 +697,7 @@ export const applyCoupon = asyncHandler(async (req, res) => {
 
   discount = Math.round(discount);
 
-  const totalAfterDiscount = Math.max(
-    0,
-    Math.round(cart.cartTotal - discount)
-  );
+  const totalAfterDiscount = Math.max(0, Math.round(cart.cartTotal - discount));
 
   // ✅ SAVE CART
   cart.totalAfterDiscount = totalAfterDiscount;
@@ -739,15 +740,11 @@ export const createOrder = asyncHandler(async (req, res) => {
   session.startTransaction();
 
   try {
-    const { COD, addressId } = req.body;
+    const { addressId } = req.body;
     const { _id } = req.user;
 
-    if (!COD) {
-      throw new Error("Only COD payment is supported");
-    }
-
     // =========================
-    // 1. GET USER + ADDRESS
+    // 1. USER + ADDRESS
     // =========================
     const user = await User.findById(_id).session(session);
     if (!user) throw new Error("User not found");
@@ -756,64 +753,69 @@ export const createOrder = asyncHandler(async (req, res) => {
     if (!address) throw new Error("Address not found");
 
     // =========================
-    // 2. GET CART
+    // 2. CART
     // =========================
     const cart = await Cart.findOne({ orderBy: _id }).session(session);
-    if (!cart) throw new Error("Cart not found");
-
-    if (!cart.items || cart.items.length === 0) {
+    if (!cart || !cart.items.length) {
       throw new Error("Cart is empty");
     }
 
     // =========================
-    // 3. CHECK STOCK
+    // 3. FETCH PRODUCTS
+    // =========================
+    const productIds = cart.items.map((i) => i.prodId);
+
+    const products = await Product.find({
+      _id: { $in: productIds },
+    }).session(session);
+
+    const productMap = {};
+    products.forEach((p) => {
+      productMap[p._id.toString()] = p; // ✅ FIX
+    });
+
+    // =========================
+    // 4. STOCK CHECK
     // =========================
     for (const item of cart.items) {
-      const product = await Product.findById(item.prodId).session(session);
+      const product = productMap[item.prodId.toString()]; // ✅ FIX
 
       if (!product || product.stock < item.quantity) {
-        throw new Error(`Not enough stock for product ${product?.title}`);
+        throw new Error(`Not enough stock for ${product?.title}`);
       }
     }
 
     // =========================
-    // 4. CALCULATE TOTAL
+    // 5. CALCULATE TOTAL
     // =========================
     const shippingFee = 5;
 
-    const hasCoupon = cart.appliedCoupon && cart.totalAfterDiscount;
+    const hasCoupon =
+      cart.appliedCoupon && typeof cart.totalAfterDiscount === "number";
+
+    const subtotal = cart.cartTotal;
 
     const finalAmount = hasCoupon
       ? cart.totalAfterDiscount + shippingFee
-      : cart.cartTotal + shippingFee;
-
-    const discount = hasCoupon
-      ? cart.cartTotal - cart.totalAfterDiscount
-      : 0;
+      : subtotal + shippingFee;
 
     // =========================
-    // 5. CREATE ORDER
+    // 6. CREATE ORDER
     // =========================
-    const order = await Order.create(
+    const orderDocs = await Order.create(
       [
         {
           orderBy: _id,
           items: cart.items,
           totalAmount: finalAmount,
-          orderStatus: "Processing",
+          status: "processing",
 
-          coupon: cart.appliedCoupon || null,
-          discount,
-
-          shippingFee,
-
+          // ✅ match schema ONLY
           shippingAddress: {
-            fullName: address.fullName,
-            phone: address.phone,
             street: address.street,
-            provinceName: address.provinceName,
-            districtName: address.districtName,
-            wardName: address.wardName,
+            ward: address.wardName,
+            district: address.districtName,
+            province: address.provinceName,
           },
 
           paymentIntent: {
@@ -823,63 +825,64 @@ export const createOrder = asyncHandler(async (req, res) => {
           },
         },
       ],
-      { session }
+      { session },
     );
 
+    const order = orderDocs[0]; // ✅ FIX
+
     // =========================
-    // 6. UPDATE STOCK
+    // 7. UPDATE STOCK
     // =========================
-    const updates = cart.items.map((item) => ({
+    const bulkOps = cart.items.map((item) => ({
       updateOne: {
-        filter: { _id: item.prodId },
-        update: [
-          {
-            $set: {
-              stock: { $subtract: ["$stock", item.quantity] },
-              sold: { $add: ["$sold", item.quantity] },
-            },
+        filter: {
+          _id: item.prodId,
+          stock: { $gte: item.quantity },
+        },
+        update: {
+          $inc: {
+            stock: -item.quantity,
+            sold: item.quantity,
           },
-          {
-            $set: {
-              isHot: {
-                $gte: [{ $add: ["$sold", item.quantity] }, 200],
-              },
-            },
-          },
-        ],
+        },
       },
     }));
 
-    await Product.bulkWrite(updates, { session });
+    const bulkResult = await Product.bulkWrite(bulkOps, { session });
 
-    // =========================
-    // 7. UPDATE COUPON USAGE
-    // =========================
-    if (cart.appliedCoupon) {
-      const coupon = await Coupon.findOne({
-        code: cart.appliedCoupon,
-      }).session(session);
-
-      if (coupon) {
-        coupon.currentUses += 1;
-        await coupon.save({ session });
-      }
+    // ✅ OPTIONAL strict check
+    if (bulkResult.modifiedCount !== cart.items.length) {
+      throw new Error("Stock update failed");
     }
 
     // =========================
-    // 8. CLEAR CART
+    // 8. COUPON UPDATE
     // =========================
-    await Cart.findOneAndDelete({ orderBy: _id }).session(session);
+    if (cart.appliedCoupon) {
+     await Coupon.updateOne(
+  { code: cart.appliedCoupon },
+  {
+    $inc: { currentUses: 1 },
+    $addToSet: { usedBy: _id }, 
+  },
+  { session }
+);
+    }
 
     // =========================
-    // 9. COMMIT
+    // 9. CLEAR CART
+    // =========================
+    await Cart.deleteOne({ orderBy: _id }).session(session);
+
+    // =========================
+    // 10. COMMIT
     // =========================
     await session.commitTransaction();
 
     res.status(200).json({
       success: true,
       message: "Order created successfully",
-      order: order[0],
+      order, // ✅ single object
     });
   } catch (error) {
     await session.abortTransaction();

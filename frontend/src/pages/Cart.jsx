@@ -1,12 +1,12 @@
 import { useUserStore } from "@/stores/userStore";
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { getGuestCart } from "@/utils/guestCart";
 import { toast } from "sonner";
 import { useAuthStore } from "@/stores/authStore";
 import StepBar from "@/components/StepBar";
 import Checkout from "./Checkout";
-
+import SuccessComponent from "@/components/SuccessComponent";
 export default function Cart() {
   const {
     carts,
@@ -15,8 +15,8 @@ export default function Cart() {
     userRemoveCoupon,
   } = useUserStore();
   const { user, openLogin } = useAuthStore();
-  const navigate = useNavigate();
-
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [pendingStep, setPendingStep] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [step, setStep] = useState(1);
@@ -46,6 +46,16 @@ export default function Cart() {
   });
 
   useEffect(() => {
+    if (step === 2) {
+      window.history.pushState(null, "", window.location.href);
+    }
+  }, [step]);
+  useEffect(() => {
+  if (step === 3) {
+    window.history.pushState(null, "", window.location.href);
+  }
+}, [step]);
+  useEffect(() => {
     if (user) {
       if (carts && carts.items) {
         setDisplayCart(carts);
@@ -56,6 +66,51 @@ export default function Cart() {
     }
   }, [user, carts]);
 
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (step === 2) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [step]);
+  useEffect(() => {
+    const handlePopState = async (e) => {
+      if (step === 2) {
+        const confirmLeave = window.confirm(
+          "Your checkout is not completed. Leave anyway?",
+        );
+
+        if (!confirmLeave) {
+          // 🚫 STOP going back
+          window.history.pushState(null, "", window.location.href);
+          return;
+        }
+
+        // ✅ user confirmed → cleanup
+        if (carts?.appliedCoupon) {
+          await userRemoveCoupon();
+        }
+        
+      }
+          // 🔥 NEW: block step 3 completely
+    if (step === 3) {
+      window.history.pushState(null, "", window.location.href);
+    }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [step, carts]);
   const handleRemove = async () => {
     if (!selectedId) return;
 
@@ -90,7 +145,6 @@ export default function Cart() {
     await userUpdateQuantity(id, newQty);
   };
 
-  // 🔥 CHECKOUT
   const handleCheckout = () => {
     if (!user) {
       toast.error("Please login to checkout");
@@ -100,28 +154,46 @@ export default function Cart() {
 
     setStep(2); // 👉 go to checkout step
   };
-  const handleChangeStep = async (nextStep) => {
-    if (step === 2 && nextStep === 1 && carts?.appliedCoupon) {
-      await userRemoveCoupon();
+  const handleChangeStep = (nextStep) => {
+    if (step === 2 && nextStep === 1) {
+      setPendingStep(nextStep);
+      setShowCancelModal(true);
+      return;
     }
 
     setStep(nextStep);
   };
+  const confirmCancelCheckout = async () => {
+    if (carts?.appliedCoupon) {
+      await userRemoveCoupon();
+    }
+
+    setStep(pendingStep); // go back to step 1
+    setPendingStep(null);
+    setShowCancelModal(false);
+  };
+
+  const closeCancelModal = () => {
+    setPendingStep(null);
+    setShowCancelModal(false);
+  };
   return (
     <div className="bg-gray-50 min-h-screen py-10">
       <div className="max-w-6xl mx-auto px-4">
-        <StepBar currentStep={step} onStepChange={handleChangeStep} />
+        {step !== 1 && (
+          <StepBar currentStep={step} onStepChange={handleChangeStep} />
+        )}
         {step === 1 && (
           <>
             <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
               {/* CART ITEMS */}
-              <div className="md:col-span-2 space-y-4">
+              <div className={`${displayCart.items.length > 0 ? "md:col-span-2 space-y-4" : "md:col-span-3 space-y-4"}`}>
                 {displayCart.items?.length === 0 && (
                   <div className="bg-white rounded-2xl shadow p-10 text-center">
                     <p className="text-gray-500 mb-4">Your cart is empty.</p>
                     <Link
                       to="/shop"
-                      className="bg-black text-white px-6 py-2 rounded-lg"
+                      className="bg-red-400 text-white px-6 py-2 font-medium rounded-xl hover:bg-red-500"
                     >
                       Browse Books
                     </Link>
@@ -194,35 +266,36 @@ export default function Cart() {
               </div>
 
               {/* SUMMARY */}
-              <div className="bg-white rounded-2xl shadow p-6 h-fit">
-                <h3 className="text-lg font-semibold mb-4">Order Summary</h3>
+              {displayCart.items.length > 0 && (
+                <div className="bg-white rounded-2xl shadow p-6 h-fit">
+                  <h3 className="text-lg font-semibold mb-4">Order Summary</h3>
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>${displayCart.cartTotal}</span>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Subtotal</span>
+                      <span>${displayCart.cartTotal}</span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span>Shipping</span>
+                      <span>$5.00</span>
+                    </div>
+
+                    <div className="flex justify-between font-semibold border-t pt-2">
+                      <span>Total</span>
+                      <span>${displayCart.cartTotal + 5}</span>
+                    </div>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span>Shipping</span>
-                    <span>$5.00</span>
-                  </div>
-
-                  <div className="flex justify-between font-semibold border-t pt-2">
-                    <span>Total</span>
-                    <span>${displayCart.cartTotal + 5}</span>
-                  </div>
+                  <button
+                    onClick={handleCheckout}
+                    className="w-full mt-6 bg-black text-white py-3 rounded-lg hover:bg-gray-800"
+                  >
+                    Proceed to Checkout
+                  </button>
                 </div>
-
-                <button
-                  onClick={handleCheckout}
-                  className="w-full mt-6 bg-black text-white py-3 rounded-lg hover:bg-gray-800"
-                >
-                  Proceed to Checkout
-                </button>
-              </div>
+              )}
             </div>
-
             {/* CONFIRM MODAL */}
             {showConfirm && (
               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -251,10 +324,36 @@ export default function Cart() {
             )}
           </>
         )}
-
-        {step === 2 && <Checkout />}
+        {step === 2 && <Checkout setStep={setStep} />}
 
         {step === 3 && <SuccessComponent />}
+
+        {showCancelModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-6 w-96 shadow-lg">
+              <h3 className="text-lg font-semibold mb-3">Cancel checkout?</h3>
+
+              <p className="text-sm text-gray-500 mb-5">
+                If you go back, your applied coupon will be removed and your
+                checkout progress will be lost.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={confirmCancelCheckout}
+                  className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
+                >
+                  Yes, Cancel
+                </button>
+                <button
+                  onClick={closeCancelModal}
+                  className="px-4 py-2 rounded-lg border"
+                >
+                  No, Stay
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
