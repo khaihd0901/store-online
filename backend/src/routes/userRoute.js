@@ -1,5 +1,5 @@
 import express from 'express'
-import { getUsers,getUserById, updateUser,updatePassword, forgotPasswordOTP, resetPassword, getWishlist, userCart, getUserCart, emptyCart, applyCoupon, createOrder, getAllOrders, getOrderbyUser, authMe, verifyOTP, addToWishlist, removeFromWishlist, toggleUserLock, softDeleteUser, restoreUser, getDeletedUsers, removeFromCart, updateCartItemQuantity, addAddress, setDefaultAddress, deleteAddress, getAddresses, mergeCart } from '../controllers/userController.js';
+import { getUsers,getUserById, updateUser,updatePassword, forgotPasswordOTP, resetPassword, getWishlist, userCart, getUserCart, emptyCart, applyCoupon, createOrder, getAllOrders, getOrderbyUser, authMe, verifyOTP, addToWishlist, removeFromWishlist, toggleUserLock, softDeleteUser, restoreUser, getDeletedUsers, removeFromCart, updateCartItemQuantity, addAddress, setDefaultAddress, deleteAddress, getAddresses, mergeCart, removeCoupon } from '../controllers/userController.js';
 import {protectedRoute, isAdmin} from '../middlewares/authMiddleware.js';
 
 
@@ -25,6 +25,7 @@ router.post('/delete-item', protectedRoute, removeFromCart)
 router.put('/update-quantity', protectedRoute, updateCartItemQuantity)
 router.post('/empty-cart',protectedRoute, emptyCart);
 router.post('/apply-coupon',protectedRoute, applyCoupon );
+router.put('/remove-coupon', protectedRoute,removeCoupon)
 router.post('/create-order',protectedRoute, createOrder );
 router.post('/get-order',protectedRoute, getOrderbyUser)
 router.post('/add-address',protectedRoute, addAddress)

@@ -1,14 +1,17 @@
 import { useUserStore } from "@/stores/userStore";
-import { Truck, Store, ShieldCheck, TicketPercent } from "lucide-react";
+import { ShieldCheck, TicketPercent } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import AddressSelector from "@/components/AddressSelector";
-
+import { Navigate } from "react-router";
+import { toast } from "sonner";
 const Checkout = () => {
-  const { carts } = useUserStore();
+  const { userApplyCoupon, carts, isLoading, userCreateOrder } = useUserStore();
   const { user } = useAuthStore();
+  const [couponCode, setCouponCode] = useState("");
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
   const checkoutSchema = Yup.object({
     name: Yup.string().required("Full name is required"),
     email: Yup.string().email("Invalid email").required("Email is required"),
@@ -22,7 +25,7 @@ const Checkout = () => {
 
   const formik = useFormik({
     initialValues: {
-      name: "",
+      fullName: "",
       email: "",
       phone: "",
 
@@ -37,28 +40,39 @@ const Checkout = () => {
 
     validationSchema: checkoutSchema,
 
-    onSubmit: (values) => {
-      console.log("CHECKOUT DATA:", values);
+    onSubmit: async () => {
+      if (!selectedAddressId) {
+        return toast.error("Please select address");
+      }
+
+      const res = await userCreateOrder({
+        COD: true,
+        addressId: selectedAddressId,
+      });
+
+      if (res?.success) {
+        Navigate("/order-success");
+      }
     },
   });
 
-  const subtotal = carts.items?.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0,
-  );
+const subtotal =
+  carts.items?.reduce((acc, item) => acc + item.price * item.quantity, 0) || 0;
 
-  const shipping = 5;
-  const discount = 10;
-  const total = subtotal + shipping - discount;
+const shipping = 5;
 
+const total =
+  carts?.totalAfterDiscount != null
+    ? carts.totalAfterDiscount + shipping
+    : subtotal + shipping;
   useEffect(() => {
     if (!user) return;
-
     const addr =
       user.addresses?.find((a) => a.isDefault) || user.addresses?.[0];
+    setSelectedAddressId(addr._id);
 
     formik.setValues({
-      name: user.fullName || `${user.firstName} ${user.lastName}`,
+      fullName: user.fullName || `${user.firstName} ${user.lastName}`,
       email: user.email || "",
       phone: user.phone || "",
 
@@ -71,9 +85,15 @@ const Checkout = () => {
       street: addr?.street || "",
     });
   }, [user]);
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+
+    await userApplyCoupon({ coupon: couponCode });
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 py-10">
-      <from
+      <form
         onSubmit={formik.handleSubmit}
         className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-10 px-4"
       >
@@ -87,15 +107,15 @@ const Checkout = () => {
                 Full Name
               </label>
               <input
-                name="name"
-                value={formik.values.name}
+                name="fullName"
+                value={formik.values.fullName}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none disabled:bg-gray-100 transition"
               />
 
-              {formik.touched.name && formik.errors.name && (
-                <p className="text-red-500 text-sm">{formik.errors.name}</p>
+              {formik.touched.fullName && formik.errors.fullName && (
+                <p className="text-red-500 text-sm">{formik.errors.fullName}</p>
               )}
             </div>
 
@@ -104,7 +124,7 @@ const Checkout = () => {
                 Email
               </label>
               <input
-                name="name"
+                name="email"
                 value={formik.values.email}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
@@ -121,7 +141,7 @@ const Checkout = () => {
                 Phone number
               </label>
               <input
-                name="name"
+                name="phone"
                 value={formik.values.phone}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
@@ -132,41 +152,48 @@ const Checkout = () => {
                 <p className="text-red-500 text-sm">{formik.errors.phone}</p>
               )}
             </div>
+            <div className="flex flex-col">
+              <label className="text-xs font-medium text-gray-500 mb-1">
+                Select Address
+              </label>
 
+              <select
+                value={selectedAddressId}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  setSelectedAddressId(id);
+                  const addr = user.addresses.find((a) => a._id === id);
+
+                  if (addr) {
+                    formik.setValues({
+                      ...formik.values,
+                      provinceCode: addr.provinceCode,
+                      provinceName: addr.provinceName,
+                      districtCode: addr.districtCode,
+                      districtName: addr.districtName,
+                      wardCode: addr.wardCode,
+                      wardName: addr.wardName,
+                      street: addr.street,
+                    });
+                  }
+                }}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm
+    focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none"
+              >
+                {user?.addresses?.map((addr) => (
+                  <option key={addr._id} value={addr._id}>
+                    {addr.street}, {addr.wardName}, {addr.districtName}, {addr.provinceName}
+                  </option>
+                ))}
+              </select>
+            </div>
             <AddressSelector
+              disabled={true}
               values={formik.values}
               setFieldValue={formik.setFieldValue}
             />
-            {formik.touched.provinceCode && formik.errors.provinceCode && (
-              <p className="text-red-500 text-sm">
-                {formik.errors.provinceCode}
-              </p>
-            )}
-
-            {formik.touched.districtCode && formik.errors.districtCode && (
-              <p className="text-red-500 text-sm">
-                {formik.errors.districtCode}
-              </p>
-            )}
-
-            {formik.touched.wardCode && formik.errors.wardCode && (
-              <p className="text-red-500 text-sm">{formik.errors.wardCode}</p>
-            )}
-
-            {formik.touched.street && formik.errors.street && (
-              <p className="text-red-500 text-sm">{formik.errors.street}</p>
-            )}
-
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <input
-                type="checkbox"
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none disabled:bg-gray-100 transition"
-              />
-              I agree to Terms & Conditions
-            </div>
           </div>
         </div>
-
         {/* RIGHT */}
         <div className="bg-white p-6 rounded-2xl shadow">
           <h2 className="text-lg font-semibold mb-4">Review your cart</h2>
@@ -198,15 +225,26 @@ const Checkout = () => {
             </span>
 
             <input
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value)}
               placeholder="Discount code"
-              className="w-full border p-3 pl-10 pr-24 rounded-lg"
+              className="w-full border border-gray-300 p-3 pl-10 pr-24 rounded-lg"
             />
-
-            <button className="absolute font-medium right-2 top-1/2 -translate-y-1/2 bg-red-400 text-white px-4 py-1.5 rounded-md text-sm hover:bg-red-500">
-              Apply
+            <button
+              type="button"
+              onClick={handleApplyCoupon}
+              disabled={isLoading}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-red-400 text-white px-4 py-1.5 rounded-md text-sm hover:bg-red-500 disabled:opacity-50"
+            >
+              {isLoading ? "Applying..." : "Apply"}
             </button>
           </div>
 
+          {carts?.appliedCoupon && (
+            <p className="text-green-500 text-sm mt-2">
+              Coupon "{carts.appliedCoupon}" applied
+            </p>
+          )}
           {/* TOTAL */}
           <div className="mt-6 space-y-2 text-sm">
             <div className="flex justify-between">
@@ -217,10 +255,15 @@ const Checkout = () => {
               <span>Shipping</span>
               <span>${shipping}</span>
             </div>
-            <div className="flex justify-between text-red-500">
-              <span>Discount</span>
-              <span>-${discount}</span>
-            </div>
+<div className="flex justify-between text-red-500">
+  <span>Discount</span>
+  <span>
+    -$
+    {carts?.totalAfterDiscount
+      ? subtotal - carts.totalAfterDiscount
+      : 0}
+  </span>
+</div>
             <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
               <span>${total}</span>
@@ -229,16 +272,17 @@ const Checkout = () => {
 
           <button
             type="submit"
-            className="w-full mt-6 bg-red-400 text-white py-3 rounded-xl font-medium hover:bg-red-500"
+            disabled={isLoading}
+            className="w-full mt-6 bg-red-400 text-white py-3 rounded-xl font-medium hover:bg-red-500 disabled:bg-gray-300"
           >
-            Pay Now
+            {isLoading ? "Processing..." : "Pay Now"}
           </button>
 
           <div className="flex items-center justify-center gap-2 mt-4 text-xs text-gray-500">
             <ShieldCheck size={16} /> Secure Checkout - SSL Encrypted
           </div>
         </div>
-      </from>
+      </form>
     </div>
   );
 };
