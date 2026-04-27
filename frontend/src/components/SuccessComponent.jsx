@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router";
 
-const SuccessComponent = () => {
+const SuccessComponent = ({orderData}) => {
   return (
     <div className="h h-fit flex justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
@@ -32,7 +32,7 @@ const SuccessComponent = () => {
           <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
             <div className="text-xs text-slate-500">Order number</div>
             <div className="mt-1 text-sm font-semibold text-slate-900">
-              #ORD1234567
+              {orderData.orderCode}
             </div>
           </div>
 
@@ -47,7 +47,7 @@ const SuccessComponent = () => {
             <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
               <div className="text-xs text-slate-500">Total</div>
               <div className="mt-1 text-sm font-semibold text-slate-900">
-                $129.99
+                {orderData.totalAmount} $
               </div>
             </div>
           </div>
@@ -56,8 +56,7 @@ const SuccessComponent = () => {
           <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
             <div className="text-xs text-slate-500">Shipping</div>
             <div className="mt-1 text-sm text-slate-900 leading-snug">
-              123 Market Street <br />
-              Springfield, IL
+              {orderData.shippingAddress.street} ,{orderData.shippingAddress.ward} ,{orderData.shippingAddress.district}, {orderData.shippingAddress.province}
             </div>
           </div>
 
@@ -65,13 +64,13 @@ const SuccessComponent = () => {
           <div className="flex flex-col gap-2">
             <Link
               to="/orders"
-              className="w-full text-center rounded-xl bg-red-400 text-white py-2 text-sm font-medium hover:bg-redd-500 transition"
+              className="w-full text-center rounded-xl bg-green-600 text-white py-2 text-sm font-medium hover:bg-redd-500 transition"
             >
               View Orders
             </Link>
             <Link
               to="/shop"
-              className="w-full text-center rounded-xl border border-slate-300 py-2 text-sm font-medium hover:bg-slate-50 transition"
+              className="w-full text-center rounded-xl bg-red-400 text-white py-2 text-sm font-medium hover:bg-redd-500 transition"
             >
               Continue Shopping
             </Link>

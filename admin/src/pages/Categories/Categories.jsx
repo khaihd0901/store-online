@@ -4,14 +4,20 @@ import CategoryDetail from "./CategoryDetail";
 import AddCategory from "./AddCategory";
 import ConfirmModal from "../../components/ConfirmDialog";
 import { useCategoryStore } from "../../stores/categoryStore";
+import TableSkeleton from "../../components/TableSkeleton";
 
 const Categories = () => {
-  const { categoryDeleteById, categoryGetAll, clearState, categories } =
-    useCategoryStore();
+  const {
+    categoryDeleteById,
+    categoryGetAll,
+    clearState,
+    categories,
+    isLoading,
+  } = useCategoryStore();
   const [categoryId, setCategoryId] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  console.log(selectedCategory)
+  console.log(selectedCategory);
   const addCategory = () => {
     setShowAdd(false);
   };
@@ -53,17 +59,20 @@ const Categories = () => {
           <h1 className="text-xl font-semibold">Categories Management</h1>
           <button
             onClick={() => setShowAdd(true)}
-            className="bg-[var(--color-fdaa3d)] text-white px-4 py-2 rounded-xl cursor-pointer"
+            className="bg-[var(--color-febd69)] text-white px-4 py-2 rounded-xl cursor-pointer"
           >
             + Add Category
           </button>
         </div>
-
-        <Table
-          data={data}
-          onDelete={(e) => handleDeleteClick(e)}
-          onView={(e) => handleView(e)}
-        />
+        {isLoading ? (
+          <TableSkeleton rows={categories.length} cols={data.length} />
+        ) : (
+          <Table
+            data={data}
+            onDelete={(e) => handleDeleteClick(e)}
+            onView={(e) => handleView(e)}
+          />
+        )}
 
         {showAdd && (
           <AddCategory onClose={handleCloseAddCate} onAdd={addCategory} />

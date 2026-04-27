@@ -11,11 +11,11 @@ const ConfirmModal = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/10 flex items-center justify-center z-50"
       onClick={onCancel}
     >
       <div
-        className="bg-white rounded-xl p-6 w-80 shadow-xl"
+        className="bg-white rounded-xl p-6 w-80"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="font-semibold text-lg mb-2">{title}</h3>
