@@ -1,5 +1,5 @@
 import express from 'express'
-import { getUsers,getUserById, updateUser,updatePassword, forgotPasswordOTP, resetPassword, getWishlist, userCart, getUserCart, emptyCart, applyCoupon, createOrder, getAllOrders, getOrderbyUser, authMe, verifyOTP, addToWishlist, removeFromWishlist, toggleUserLock, softDeleteUser, restoreUser, getDeletedUsers, removeFromCart, updateCartItemQuantity, addAddress, setDefaultAddress, deleteAddress, getAddresses, mergeCart, removeCoupon } from '../controllers/userController.js';
+import { getUsers,getUserById, updateUser,updatePassword, forgotPasswordOTP, resetPassword, getWishlist, userCart, getUserCart, emptyCart, applyCoupon, createOrder, getAllOrders, getOrderbyUser, authMe, verifyOTP, addToWishlist, removeFromWishlist, toggleUserLock, softDeleteUser, restoreUser, getDeletedUsers, removeFromCart, updateCartItemQuantity, addAddress, setDefaultAddress, deleteAddress, getAddresses, mergeCart, removeCoupon, adminSearch, changeOrderStatus } from '../controllers/userController.js';
 import {protectedRoute, isAdmin} from '../middlewares/authMiddleware.js';
 
 
@@ -27,12 +27,13 @@ router.post('/empty-cart',protectedRoute, emptyCart);
 router.post('/apply-coupon',protectedRoute, applyCoupon );
 router.put('/remove-coupon', protectedRoute,removeCoupon)
 router.post('/create-order',protectedRoute, createOrder );
-router.post('/get-order',protectedRoute, getOrderbyUser)
+router.get('/get-order',protectedRoute, getOrderbyUser)
+router.patch("/orders/:id/status",protectedRoute,isAdmin, changeOrderStatus);
 router.post('/add-address',protectedRoute, addAddress)
 router.put('/address/default/:id',protectedRoute, setDefaultAddress)
 router.delete('/address/:id',protectedRoute, deleteAddress)
 router.get('/address',protectedRoute, getAddresses)
-
+router.get("/search/:type",protectedRoute,isAdmin, adminSearch);
 
 
 

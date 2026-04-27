@@ -68,6 +68,11 @@ const userCreateOrder = async (data) =>{
     const res = await api.post('user/create-order', data)
     return res.data
 }
+
+const userGetOrders = async () =>{
+    const res = await api.post('user/get-order')
+    return res.data
+}
 const userService = {
     userUpdate,
     userGetUserById,
@@ -84,7 +89,8 @@ const userService = {
     userMergeCart,
     userApplyCoupon,
     userCreateOrder,
-    userRemoveCoupon
+    userRemoveCoupon,
+    userGetOrders
 }
 
 export default userService

@@ -7,6 +7,7 @@ import ConfirmModal from "../../components/ConfirmDialog";
 import { useProductStore } from "../../stores/productStore";
 import { useCategoryStore } from "../../stores/categoryStore";
 import { Flame, FlameIcon } from "lucide-react";
+import TableSkeleton from "../../components/TableSkeleton";
 
 export default function Product() {
   const {
@@ -18,8 +19,6 @@ export default function Product() {
   } = useProductStore();
   const { categoryGetAll, categories } = useCategoryStore();
   const data = useProductStore((s) => s.products);
-  console.log(data)
-  console.log(data);
   const [prodId, setProdId] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [confirmId, setConfirmId] = useState(null);
@@ -30,24 +29,20 @@ export default function Product() {
   const [sortKey, setSortKey] = useState("createdAt");
   const [sort, setSort] = useState("desc");
   const [filters, setFilters] = useState({});
-  const fetchProducts = useCallback(async () => {
-    const params = {
-      page,
-      limit,
-      sort: `${sort === "asc" ? "" : "-"}${sortKey}`,
-      ...filters,
-    };
 
-    if (search) params.search = search;
+  const getPageNumbers = () => {
+    const total = pagination?.totalPages || 1;
+    const visible = 3;
 
-    await productSearch(params);
-  }, [page, limit, sortKey, sort, search, filters, productSearch]);
+    let start = Math.max(1, page - Math.floor(visible / 2));
+    let end = Math.min(total, start + visible - 1);
 
-  useEffect(() => {
-    categoryGetAll();
-    fetchProducts();
-  }, [fetchProducts]);
+    if (end - start + 1 < visible) {
+      start = Math.max(1, end - visible + 1);
+    }
 
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  };
   const products = data.map((item, index) => ({
     key: index + 1,
     id: item._id,
@@ -75,7 +70,7 @@ export default function Product() {
     ) : (
       "-"
     ),
-    price: item.price,
+    price: <span>{item.price} $</span>,
   }));
 
   const handleCloseAddProduct = async (reload = false) => {
@@ -101,53 +96,108 @@ export default function Product() {
       setSort("asc");
     }
   };
-
+  
   const handleFilter = (key, value) => {
     setPage(1);
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+
+    setFilters((prev) => {
+      const newFilters = { ...prev };
+
+      // ❗ remove filter when empty
+      if (!value) {
+        delete newFilters[key];
+      } else {
+        newFilters[key] = value;
+      }
+
+      return newFilters;
+    });
   };
+  const fetchProducts = useCallback(async () => {
+    const params = {
+      page,
+      limit,
+      sort: `${sort === "asc" ? "" : "-"}${sortKey}`,
+      ...filters,
+    };
+
+    if (search) params.search = search;
+
+    await productSearch(params);
+  }, [page, limit, sortKey, sort, search, filters, productSearch]);
+
+  useEffect(() => {
+    categoryGetAll();
+    fetchProducts();
+  }, [fetchProducts]);
+  console.log(filters)
   return (
     <div className="p-6 bg-gray-50 min-h-screen rounded-xl shadow">
       <div className="flex justify-between mb-6">
         <h1 className="text-xl font-semibold">Product Management</h1>
         <button
           onClick={() => setShowAdd(true)}
-          className="bg-[var(--color-fdaa3d)] text-white px-4 py-2 rounded-xl"
+          className="bg-[var(--color-febd69)] text-white px-4 py-2 rounded-xl"
         >
           + Add Product
         </button>
       </div>
 
-      <Table
-        data={products}
-        onDelete={(e) => setConfirmId(e.id)}
-        onView={(e) => setProdId(e.id)}
-        onSort={handleSort}
-        sortKey={sortKey}
-        sortOrder={sort}
-        onFilter={handleFilter}
-        categories={categories}
-      />
+      {isLoading ? (
+        <TableSkeleton rows={10} cols={7} />
+      ) : (
+        <Table
+          data={products}
+          onDelete={(e) => setConfirmId(e.id)}
+          onView={(e) => setProdId(e.id)}
+          onSort={handleSort}
+          sortKey={sortKey}
+          sortOrder={sort}
+          onFilter={handleFilter}
+          categories={categories}
+        />
+      )}
 
       {/* pagination */}
-      {data.length >= 10 && (
-        <div className="flex gap-2 mt-4">
-          {[...Array(pagination?.totalPages || 1)].map((_, i) => (
+      <div className="flex justify-center pt-8">
+        <nav className="flex items-center space-x-2">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((prev) => prev - 1)}
+            className={`px-3 py-2 text-sm font-semibold ${
+              page === 1
+                ? "text-gray-300 cursor-not-allowed"
+                : "text-gray-500 hover:text-gray-900"
+            }`}
+          >
+            Prev
+          </button>
+          {getPageNumbers().map((pageNumber) => (
             <button
-              key={i}
-              onClick={() => setPage(i + 1)}
-              className={`px-3 py-1 rounded ${
-                page === i + 1 ? "bg-blue-500 text-white" : "bg-gray-200"
+              key={pageNumber}
+              onClick={() => setPage(pageNumber)}
+              className={`w-8 h-8 flex items-center justify-center rounded text-sm font-bold ${
+                page === pageNumber
+                  ? "bg-red-400 text-white"
+                  : "text-gray-600 hover:bg-gray-100"
               }`}
             >
-              {i + 1}
+              {pageNumber}
             </button>
           ))}
-        </div>
-      )}
+          <button
+            disabled={page === pagination?.totalPages}
+            onClick={() => setPage((prev) => prev + 1)}
+            className={`px-3 py-2 text-sm font-semibold ${
+              page === pagination?.totalPages
+                ? "text-gray-300 cursor-not-allowed"
+                : "text-gray-500 hover:text-gray-900"
+            }`}
+          >
+            Next
+          </button>
+        </nav>
+      </div>
 
       {showAdd && <AddProduct onClose={handleCloseAddProduct} />}
 

@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/stores/authStore";
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import { LogOut, PackageIcon, SettingsIcon, UserIcon } from "lucide-react";
@@ -19,6 +19,7 @@ const Header = () => {
   const [registerSuccess, setRegisterSuccess] = useState("");
   const { userForgotPasswordOTP, userVerifyOTP, userResetPassword,userGetWishlist,userGetCart,wishlistCount, clearState } =
     useUserStore();
+    const navigate = useNavigate();
 const cartCount = useUserStore((state) => state.cartCount);
   let validationSchema = Yup.object({
     email: Yup.string()
@@ -126,6 +127,7 @@ const cartCount = useUserStore((state) => state.cartCount);
   const handleSignOut = async () =>{
     await authSignOut();
     clearState();
+    navigate("/")
   }
   return (
     <>

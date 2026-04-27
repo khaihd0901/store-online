@@ -13,7 +13,9 @@ export default function Cart() {
     userRemoveItemFromCart,
     userUpdateQuantity,
     userRemoveCoupon,
+    order
   } = useUserStore();
+  console.log(order)
   const { user, openLogin } = useAuthStore();
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [pendingStep, setPendingStep] = useState(null);
@@ -144,15 +146,17 @@ export default function Cart() {
 
     await userUpdateQuantity(id, newQty);
   };
-
   const handleCheckout = () => {
     if (!user) {
       toast.error("Please login to checkout");
       openLogin();
       return;
     }
-
-    setStep(2); // 👉 go to checkout step
+if (!user.addresses || user.addresses.length === 0) {
+  toast.error("Please add your address before checkout");
+  return;
+}
+    setStep(2);
   };
   const handleChangeStep = (nextStep) => {
     if (step === 2 && nextStep === 1) {
@@ -326,7 +330,7 @@ export default function Cart() {
         )}
         {step === 2 && <Checkout setStep={setStep} />}
 
-        {step === 3 && <SuccessComponent />}
+        {step === 3 && <SuccessComponent orderData={order} />}
 
         {showCancelModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

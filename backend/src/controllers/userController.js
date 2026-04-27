@@ -2,13 +2,22 @@ import asyncHandler from "express-async-handler";
 import User from "../models/User.js";
 import Product from "../models/Product.js";
 import Session from "../models/Session.js";
-import { sendResetPasswordOTP } from "../utils/emailHandler.js";
+import Category from "../models/Category.js";
+import {
+  sendResetPasswordOTP,
+  sendOrderConfirmation,
+} from "../utils/emailHandler.js";
 import Cart from "../models/Cart.js";
 import Coupon from "../models/Coupon.js";
 import Order from "../models/Order.js";
 import crypto from "crypto";
 import mongoose from "mongoose";
 
+const generateOrderCode = () => {
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const random = Math.floor(1000 + Math.random() * 9000);
+  return `ORD-${date}-${random}`;
+};
 // ============================
 // GET ALL USERS
 // ============================
@@ -802,9 +811,11 @@ export const createOrder = asyncHandler(async (req, res) => {
     // =========================
     // 6. CREATE ORDER
     // =========================
+    const orderCode = generateOrderCode();
     const orderDocs = await Order.create(
       [
         {
+          orderCode,
           orderBy: _id,
           items: cart.items,
           totalAmount: finalAmount,
@@ -859,14 +870,14 @@ export const createOrder = asyncHandler(async (req, res) => {
     // 8. COUPON UPDATE
     // =========================
     if (cart.appliedCoupon) {
-     await Coupon.updateOne(
-  { code: cart.appliedCoupon },
-  {
-    $inc: { currentUses: 1 },
-    $addToSet: { usedBy: _id }, 
-  },
-  { session }
-);
+      await Coupon.updateOne(
+        { code: cart.appliedCoupon },
+        {
+          $inc: { currentUses: 1 },
+          $addToSet: { usedBy: _id },
+        },
+        { session },
+      );
     }
 
     // =========================
@@ -878,7 +889,12 @@ export const createOrder = asyncHandler(async (req, res) => {
     // 10. COMMIT
     // =========================
     await session.commitTransaction();
+    await order.populate("items.prodId");
 
+    // ✅ send email (non-blocking)
+    sendOrderConfirmation(user.email, order).catch((err) =>
+      console.error("Email error:", err),
+    );
     res.status(200).json({
       success: true,
       message: "Order created successfully",
@@ -898,29 +914,149 @@ export const createOrder = asyncHandler(async (req, res) => {
 export const getOrderbyUser = asyncHandler(async (req, res) => {
   const { _id } = req.user;
 
-  const order = await Order.findOne({ orderBy: _id })
-    .populate("items.prodId")
-    .populate("orderBy");
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
 
-  res.status(200).json(order);
+  const [orders, total] = await Promise.all([
+    Order.find({ orderBy: _id })
+      .populate("items.prodId")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+
+    Order.countDocuments({ orderBy: _id }),
+  ]);
+
+  res.status(200).json({
+    data: orders,
+    pagination: {
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
 });
 
 // ============================
 // GET ALL ORDERS
 // ============================
 export const getAllOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find().populate("orderBy");
-  res.status(200).json(orders);
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const status = req.query.status;
+
+  const filter = {};
+
+  if (status) {
+    filter.status = status;
+  }
+
+  const [orders, total] = await Promise.all([
+    Order.find(filter)
+      .populate("orderBy")
+      .populate("items.prodId")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+
+    Order.countDocuments(filter),
+  ]);
+
+  res.status(200).json({
+    data: orders,
+    pagination: {
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
 });
 
 // ============================
 // UPDATE ORDER STATUS
 // ============================
-export const updateOrderStatus = asyncHandler(async (req, res) => {
-  const { status } = req.body;
+export const changeOrderStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  const { status } = req.body;
 
-  const order = await Order.findByIdAndUpdate(id, { status }, { new: true });
+  const allowedStatus = [
+    "pending",
+    "processing",
+    "shipped",
+    "delivered",
+    "cancelled",
+  ];
 
-  res.status(200).json(order);
+  if (!allowedStatus.includes(status)) {
+    return res.status(400).json({ message: "Invalid status" });
+  }
+
+  const order = await Order.findById(id);
+
+  if (!order) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+
+  order.status = status;
+  await order.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Order status updated",
+    order,
+  });
 });
+
+
+export const adminSearch = async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q) return res.json({});
+
+    const regex = new RegExp(q, "i");
+
+    const [products, orders, categories, users] = await Promise.all([
+      Product.find({
+        $or: [
+          { title: regex },
+          { author: regex },
+        ],
+      })
+        .select("title price images")
+        .limit(5),
+
+      Order.find({
+        orderCode: regex,
+      })
+        .select("orderCode totalAmount status createdAt")
+        .limit(5),
+
+      Category.find({
+        categoryName: regex,
+      })
+        .limit(5),
+
+      User.find({
+        $or: [
+          { email: regex },
+          { fullName: regex },
+        ],
+      })
+        .select("email name")
+        .limit(5),
+    ]);
+
+    res.json({
+      products,
+      orders,
+      categories,
+      users,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

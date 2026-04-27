@@ -4,8 +4,9 @@ import Table from "../../components/TableModal/Table";
 import DetailUser from "./DetailUser";
 import { useUserStore } from "../../stores/userStore";
 import ConfirmModal from "../../components/ConfirmDialog";
+import TableSkeleton from "../../components/TableSkeleton";
 const Users = () => {
-  const { userGetAll, users, toggleUserLock, clearState,userDelete } = useUserStore();
+  const { userGetAll, users, toggleUserLock, clearState,userDelete,isLoading } = useUserStore();
   const [userId, setUserId] = useState(null);
     const [confirmId, setConfirmId] = useState(null);
   useEffect(() => {
@@ -60,7 +61,15 @@ const Users = () => {
         <h1 className="text-xl font-semibold">User Management</h1>
       </div>
 
-      <Table data={data} onView={(e) => handleView(e)} onDelete={(e) => handleDeleteClick(e)} />
+              {isLoading ? (
+                <TableSkeleton rows={users.length} cols={data.length} />
+              ) : (
+                <Table
+                  data={data}
+                  onDelete={(e) => handleDeleteClick(e)}
+                  onView={(e) => handleView(e)}
+                />
+              )}
 
       {userId && <DetailUser userId={userId} onClose={handleCloseDetail} />}
 

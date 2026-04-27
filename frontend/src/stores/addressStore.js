@@ -1,6 +1,8 @@
 import addressService from "@/services/addressService";
 import { create } from "zustand";
 import { toast } from "sonner";
+import { useAuthStore } from "./authStore";
+
 
 export const useAddressStore = create((set, get) => ({
   addresses: [],
@@ -78,7 +80,7 @@ export const useAddressStore = create((set, get) => ({
 
       set({ addresses: data });
       get().syncSelectedAddress(data);
-
+      await useAuthStore.getState().authMe()
       toast.success("Address added");
 
     } catch (err) {
@@ -101,6 +103,7 @@ export const useAddressStore = create((set, get) => ({
 
       set({ addresses: data });
       get().syncSelectedAddress(data);
+      await useAuthStore.getState().authMe()
 
       toast.success("Address removed");
 
@@ -124,6 +127,7 @@ export const useAddressStore = create((set, get) => ({
 
       set({ addresses: data });
       get().syncSelectedAddress(data);
+      await useAuthStore.getState().authMe()
 
       toast.success("Default address updated");
 

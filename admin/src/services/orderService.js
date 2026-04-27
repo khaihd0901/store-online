@@ -3,9 +3,13 @@ const getUserOrders = async()=>{
     const res = await api.get(`user/get-all-orders`)
     return res.data
 }
-
+const adminChangeStatus = async (id,status) =>{
+    const res = await api.patch(`user/orders/${id}/status`, { status })
+    return res.data
+}
 const orderService = {
     getUserOrders,  
+    adminChangeStatus
 }
 
 export default orderService

@@ -76,9 +76,9 @@ const checkoutSchema = Yup.object({
     setSelectedAddressId(addr._id);
 
     formik.setValues({
-      fullName: user.fullName || `${user.firstName} ${user.lastName}`,
+      fullName: addr.fullName || `${user.firstName} ${user.lastName}`,
       email: user.email || "",
-      phone: user.phone || "",
+      phone: addr.phone || "",
 
       provinceCode: addr.provinceCode || "",
       provinceName: addr.provinceName || "",
