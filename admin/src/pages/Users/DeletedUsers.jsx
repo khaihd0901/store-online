@@ -4,8 +4,9 @@ import Table from "../../components/TableModal/Table";
 import DetailUser from "./DetailUser";
 import { useUserStore } from "../../stores/userStore";
 import ConfirmModal from "../../components/ConfirmDialog";
+import TableSkeleton from "../../components/TableSkeleton";
 const Users = () => {
-  const { userGetDeleted, deletedUsers, toggleUserLock, clearState, userRestore } =
+  const { userGetDeleted, deletedUsers, toggleUserLock, clearState,isLoading, userRestore } =
     useUserStore();
   const [userId, setUserId] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
@@ -62,11 +63,15 @@ const Users = () => {
         <h1 className="text-xl font-semibold">User Deleted Management</h1>
       </div>
 
-      <Table
-        data={data}
-        onView={(e) => handleView(e)}
-        onRestore={(e) => handleDeleteClick(e)}
-      />
+                    {isLoading ? (
+                      <TableSkeleton rows={deletedUsers.length} cols={data.length} />
+                    ) : (
+                      <Table
+                        data={data}
+                        onDelete={(e) => handleDeleteClick(e)}
+                        onView={(e) => handleView(e)}
+                      />
+                    )}
 
       {userId && <DetailUser userId={userId} onClose={handleCloseDetail} />}
       {confirmId && (

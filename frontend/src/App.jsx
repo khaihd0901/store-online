@@ -27,6 +27,7 @@ function App() {
       userGetCart();
     }
   }, []);
+  
   return (
     <BrowserRouter>
       <Toaster richColors />

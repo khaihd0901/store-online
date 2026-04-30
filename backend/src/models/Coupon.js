@@ -34,7 +34,12 @@ const CouponSchema = new mongoose.Schema(
         message: "Percentage discount cannot exceed 100%",
       },
     },
-
+  usedBy: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
     minPurchaseAmount: {
       type: Number,
       default: 0,

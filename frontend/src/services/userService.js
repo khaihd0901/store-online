@@ -56,6 +56,23 @@ const userUpdateQuantity = async (cartData) =>{
     const res = await api.put('user/update-quantity', cartData)
     return res.data
 }
+const userApplyCoupon = async (coupon) =>{
+    const res = await api.post('user/apply-coupon', coupon)
+    return res.data
+}
+const userRemoveCoupon = async () =>{
+    const res = await api.put('user/remove-coupon')
+    return res.data
+}
+const userCreateOrder = async (data) =>{
+    const res = await api.post('user/create-order', data)
+    return res.data
+}
+
+const userGetOrders = async () =>{
+    const res = await api.post('user/get-order')
+    return res.data
+}
 const userService = {
     userUpdate,
     userGetUserById,
@@ -69,7 +86,11 @@ const userService = {
     userGetCart,
     userRemoveItemFromCart,
     userUpdateQuantity,
-    userMergeCart
+    userMergeCart,
+    userApplyCoupon,
+    userCreateOrder,
+    userRemoveCoupon,
+    userGetOrders
 }
 
 export default userService

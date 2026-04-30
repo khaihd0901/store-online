@@ -3,11 +3,12 @@ import { toast } from "sonner";
 import orderService from "../services/orderService";
 
 export const useOrderStore =create((set,get) =>({
-    orders: [],
+  orders: [],
   order: null,
   isLoading: false,
   isSuccess: false,
   isError: false,
+  pagination: {},
 
   setOrders: (data) => {
     set({
@@ -43,5 +44,14 @@ export const useOrderStore =create((set,get) =>({
     }finally{
         set({isLoading: false})
     }
+  },
+  updateOrderStatus: async (id, status) => {
+  try {
+    await orderService.adminChangeStatus(id,status)
+    toast.success("Change status success")
+    get().orderGetAll()
+  } catch (err) {
+    console.log(err);
   }
+},
 }))

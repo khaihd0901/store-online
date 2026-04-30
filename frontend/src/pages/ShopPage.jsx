@@ -190,9 +190,13 @@ const ShopPage = () => {
           <div className="lg:col-span-3">
             {/* Thanh Sort */}
             <div className="flex flex-wrap justify-between items-center mb-8 gap-4">
-              <p className="text-gray-500 font-medium text-sm">
-                Showing {start}–{end} of {totalProd} results
-              </p>
+              {isLoading ? (
+                <div className="h-4 w-40 bg-gray-200 rounded animate-pulse"></div>
+              ) : (
+                <p className="text-gray-500 font-medium text-sm">
+                  Showing {start}–{end} of {totalProd} results
+                </p>
+              )}
               <div className="relative">
                 <select 
                   onChange={handleSortChange}
@@ -249,8 +253,6 @@ const ShopPage = () => {
                 })}
               </div>
             )}
-
-            {/* Phân trang (Pagination) */}
             <div className="flex justify-center pt-8">
               <nav className="flex items-center space-x-2">
                 <button
@@ -260,7 +262,6 @@ const ShopPage = () => {
                 >
                   Prev
                 </button>
-
                 {getPageNumbers().map((pageNumber) => (
                   <button
                     key={pageNumber}
@@ -270,7 +271,6 @@ const ShopPage = () => {
                     {pageNumber}
                   </button>
                 ))}
-
                 <button
                   disabled={page === pagination?.totalPages || totalProd === 0}
                   onClick={() => setPage((prev) => prev + 1)}

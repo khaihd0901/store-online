@@ -4,9 +4,10 @@ import CouponDetail from "./CouponDetail";
 import AddCoupon from "./AddCoupon";
 import ConfirmModal from "../../components/ConfirmDialog";
 import { useCouponStore } from "../../stores/couponStore";
+import TableSkeleton from "../../components/TableSkeleton";
 
 const Coupons = () => {
-  const { couponDeleteById, couponGetAll, clearState, coupons } =
+  const { couponDeleteById, couponGetAll, clearState, coupons,isLoading } =
     useCouponStore();
   const [couId, setCouId] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -62,17 +63,21 @@ const Coupons = () => {
           <h1 className="text-xl font-semibold">Coupon Management</h1>
           <button
             onClick={() => setShowAdd(true)}
-            className="bg-[var(--color-fdaa3d)] text-white px-4 py-2 rounded-xl cursor-pointer"
+            className="bg-[var(--color-febd69)] text-white px-4 py-2 rounded-xl cursor-pointer"
           >
             + Add Coupon
           </button>
         </div>
 
-        <Table
-          data={data}
-          onDelete={(e) => handleDeleteClick(e)}
-          onView={(e) => handleView(e)}
-        />
+        {isLoading ? (
+          <TableSkeleton rows={coupons.length} cols={data.length} />
+        ) : (
+          <Table
+            data={data}
+            onDelete={(e) => handleDeleteClick(e)}
+            onView={(e) => handleView(e)}
+          />
+        )}
 
         {showAdd && (
           <AddCoupon onClose={handleCloseAddCoupon} onAdd={addCoupon} />

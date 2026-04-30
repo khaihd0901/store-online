@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { type } from 'os';
 
 const cartSchema = new mongoose.Schema(
     {
@@ -28,6 +29,9 @@ const cartSchema = new mongoose.Schema(
         cartTotal: {
             type: Number,
             default: 0,
+        },
+        appliedCoupon: {
+            type: String,
         },
         totalAfterDiscount: {
             type: Number,
