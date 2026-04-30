@@ -2,8 +2,8 @@ import axios from "axios";
 
 import { useAuthStore } from "@/stores/authStore";
 
-const base_url = import.meta.env.VITE_BASE_URL
-
+//const base_url = import.meta.env.VITE_BASE_URL
+const base_url = "http://localhost:5001/api/";
 const api = axios.create({
   baseURL: base_url,
   withCredentials: true,
