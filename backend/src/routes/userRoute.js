@@ -25,7 +25,7 @@ router.put('/update-quantity', protectedRoute, updateCartItemQuantity)
 router.post('/empty-cart',protectedRoute, emptyCart);
 router.post('/apply-coupon',protectedRoute, applyCoupon );
 router.post('/create-order',protectedRoute, createOrder );
-router.post('/get-order',protectedRoute, getOrderbyUser)
+router.get('/get-order',protectedRoute, getOrderbyUser)
 router.get('/get-all-orders',protectedRoute,isAdmin, getAllOrders)
 
 router.get('/:id',protectedRoute, getUserById);

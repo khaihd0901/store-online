@@ -12,7 +12,14 @@ export const useUserStore = create((set,get) => ({
   carts : [],
   cartCount: 0,
   wishlistCount: 0,
-
+  order: null,
+  orders: [],
+  totalOrders: 0,
+  handleError: (err) => {
+    const message = err.response?.data?.message || "An error occurred";
+    set({ isLoading: false, error: message });
+    toast.error(message);
+  },
   clearState: () => {
     set({
       step: 1,
@@ -23,6 +30,9 @@ export const useUserStore = create((set,get) => ({
       wishlistCount: 0,
       cart: [],
       wishlist: [],
+      order: null,
+      orders: [],
+      totalOrders: 0,
     });
   },
   userForgotPasswordOTP: async (emailData) => {
@@ -205,4 +215,53 @@ userUpdateQuantity: async (prodId, quantity) => {
     });
   }
 },
+  userCreateOrder: async (data) => {
+    try {
+      set({ isLoading: true, error: null });
+      const res = await userService.userCreateOrder(data);
+      toast.success("Order placed successfully 🎉");
+
+      return res; // optional (useful for redirect)
+    } catch (err) {
+      set({
+        isLoading: false,
+        error: err.response?.data?.message || "Failed to create order",
+      });
+
+      get().handleError(err);
+    }
+  },
+  userRemoveCoupon: async () => {
+    try {
+      await userService.userRemoveCoupon();
+
+      set((state) => ({
+        carts: {
+          ...state.carts,
+          totalAfterDiscount: null,
+          appliedCoupon: null,
+          discount: 0,
+        },
+      }));
+    } catch (err) {
+      console.log(err);
+    }
+  },
+  userGetOrders: async (params = {}) => {
+    try {
+      set({ isLoading: true, error: null });
+      const res = await userService.userGetOrders(params);
+
+      set({
+        isLoading: false,
+        orders: res.data || [],
+        totalOrders: res.total || 0,
+      });
+    } catch (err) {
+      set({
+        isLoading: false,
+        error: err.response?.data?.message || "Failed to get orders",
+      });
+    }
+  },
 }));

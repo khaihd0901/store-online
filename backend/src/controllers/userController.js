@@ -681,11 +681,11 @@ export const createOrder = asyncHandler(async (req, res) => {
 export const getOrderbyUser = asyncHandler(async (req, res) => {
   const { _id } = req.user;
 
-  const order = await Order.findOne({ orderBy: _id })
+  const orders = await Order.find({ orderBy: _id })
     .populate("items.prodId")
     .populate("orderBy");
 
-  res.status(200).json(order);
+  res.status(200).json({ data: orders, total: orders.length });
 });
 
 // ============================

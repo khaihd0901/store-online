@@ -39,7 +39,15 @@ const ProductPage = () => {
   }
 
   const handleAddToCart = () => {
-    userAddToCart({ prodId: product._id, quantity });
+    userAddToCart({
+      cart: [
+        {
+          prodId: product._id,
+          quantity: quantity,
+          price: product.price,
+        },
+      ],
+    });
   };
 
   const handleAddToWishlist = () => {
