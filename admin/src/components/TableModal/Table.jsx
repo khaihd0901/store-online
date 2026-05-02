@@ -77,11 +77,11 @@ export default function Table({
                     onChange={(e) => {
                       const value = e.target.value;
 
-                      onFilter("category", value || null);
+                      onFilter("category", value === "" ? undefined : value);
                     }}
                     className="mt-1 w-fit px-2 py-1 border rounded text-xs mx-auto block"
                   >
-                    <option value="">Category</option>
+                    <option value="">All Categories</option> {/* ✅ THIS */}
                     {categories.map((category) => (
                       <option key={category._id} value={category._id}>
                         {category.categoryName}
@@ -96,7 +96,6 @@ export default function Table({
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => {
                       const value = e.target.value;
-
                       onFilter(
                         "isHot",
                         value === "" ? undefined : value === "true",
@@ -105,8 +104,8 @@ export default function Table({
                     className="mt-1 w-fit px-2 py-1 border rounded text-xs mx-auto block"
                   >
                     <option value="">Hot Status</option>
+                    <option value="false">Normal</option>
                     <option value="true">Hot</option>
-                    <option value="false">Not Hot</option>
                   </select>
                 )}
               </th>
