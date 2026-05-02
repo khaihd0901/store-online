@@ -16,6 +16,8 @@ export const useUserStore = create((set, get) => ({
   cartCount: 0,
   wishlistCount: 0,
   order: null,
+  orders: [],
+  totalOrders: 0,
   handleError: (err) => {
     const message = getErrorMessage(err);
     set({ isLoading: false, error: message });
@@ -32,6 +34,8 @@ export const useUserStore = create((set, get) => ({
       carts: [],
       wishlist: [],
       order: null,
+      orders: [],
+      totalOrders: 0,
     });
   },
   userUpdate: async (id, data) => {
@@ -331,7 +335,6 @@ export const useUserStore = create((set, get) => ({
         carts: [],
         cartCount: 0,
       });
-
       toast.success("Order placed successfully 🎉");
 
       return res; // optional (useful for redirect)
@@ -358,6 +361,23 @@ export const useUserStore = create((set, get) => ({
       }));
     } catch (err) {
       console.log(err);
+    }
+  },
+  userGetOrders: async (params = {}) => {
+    try {
+      set({ isLoading: true, error: null });
+      const res = await userService.userGetOrders(params);
+
+      set({
+        isLoading: false,
+        orders: res.data || [],
+        totalOrders: res.total || 0,
+      });
+    } catch (err) {
+      set({
+        isLoading: false,
+        error: err.response?.data?.message || "Failed to get orders",
+      });
     }
   },
 }));

@@ -69,8 +69,8 @@ const userCreateOrder = async (data) =>{
     return res.data
 }
 
-const userGetOrders = async () =>{
-    const res = await api.post('user/get-order')
+const userGetOrders = async (params = {}) =>{
+    const res = await api.get('user/get-order', { params })
     return res.data
 }
 const userService = {
@@ -88,8 +88,8 @@ const userService = {
     userUpdateQuantity,
     userMergeCart,
     userApplyCoupon,
-    userCreateOrder,
     userRemoveCoupon,
+    userCreateOrder,
     userGetOrders
 }
 

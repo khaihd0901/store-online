@@ -35,9 +35,6 @@ router.put('/address/default/:id',protectedRoute, setDefaultAddress)
 router.delete('/address/:id',protectedRoute, deleteAddress)
 router.get('/address',protectedRoute, getAddresses)
 router.get("/search/:type",protectedRoute,isAdmin, adminSearch);
-
-
-
 router.get('/get-all-orders',protectedRoute,isAdmin, getAllOrders)
 
 router.get('/:id',protectedRoute, getUserById);

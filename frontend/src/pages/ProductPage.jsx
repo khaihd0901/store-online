@@ -44,7 +44,6 @@ const ProductPage = () => {
   }
 
   const handleAddToCart = async () => {
-    console.log(quantity)
     const productData = {
       prodId: product._id,
       title: product.title,
