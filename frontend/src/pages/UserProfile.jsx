@@ -6,6 +6,7 @@ import AddressSelector from "@/components/AddressSelector";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import { useUserStore } from "@/stores/userStore";
+import { Trash2Icon } from "lucide-react";
 export default function UserProfile() {
   const { user, authSignOut, authMe } = useAuthStore();
   const {
@@ -17,7 +18,7 @@ export default function UserProfile() {
     setDefaultAddress,
     addAddress,
   } = useAddressStore();
-  const {userUpdate} = useUserStore();
+  const { userUpdate } = useUserStore();
   const defaultAddress = addresses.find((addr) => addr.isDefault);
   const [activeTab, setActiveTab] = useState("profile");
   const [showForm, setShowForm] = useState(false);
@@ -79,7 +80,7 @@ export default function UserProfile() {
     }),
 
     onSubmit: async (values) => {
-      await userUpdate(user._id,values);
+      await userUpdate(user._id, values);
       await authMe();
     },
   });
@@ -105,7 +106,10 @@ export default function UserProfile() {
 
           <div className="space-y-2 text-sm">
             <button
-              onClick={() => setActiveTab("profile")}
+              onClick={() => {
+                setActiveTab("profile");
+                authMe();
+              }}
               className={`w-full text-left px-3 py-2 rounded ${
                 activeTab === "profile" && "bg-gray-100 font-medium"
               }`}
@@ -135,12 +139,15 @@ export default function UserProfile() {
         <div className="col-span-9 space-y-6">
           {/* ================= PROFILE TAB ================= */}
           {activeTab === "profile" && (
-            <form onSubmit={personalFormik.handleSubmit} className="bg-white p-6 rounded-xl shadow">
+            <form
+              onSubmit={personalFormik.handleSubmit}
+              className="bg-white p-6 rounded-xl shadow"
+            >
               <h2 className="text-lg font-semibold mb-4">
                 Profile Information
               </h2>
 
-              <div  className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-gray-600">First Name</label>
                   <input
@@ -219,7 +226,10 @@ export default function UserProfile() {
             transition cursor-not-allowed"
                 />
               </div>
-              <button type="submit" className="mt-4 w-full bg-red-400 text-white px-4 py-2 rounded hover:bg-red-500">
+              <button
+                type="submit"
+                className="mt-4 w-full bg-red-400 text-white px-4 py-2 rounded hover:bg-red-500"
+              >
                 Save
               </button>
             </form>
@@ -232,7 +242,7 @@ export default function UserProfile() {
 
               {/* SELECTED */}
               {selectedAddress && (
-                <div className="mb-4 border p-3 rounded bg-gray-50">
+                <div className="mb-4 border p-3 rounded-lg bg-gray-50">
                   <p className="font-medium">
                     {selectedAddress.fullName} - {selectedAddress.phone}
                   </p>
@@ -250,43 +260,45 @@ export default function UserProfile() {
                   <div
                     key={addr._id}
                     onClick={() => setSelectedAddress(addr._id)}
-                    className={`border p-4 rounded-lg cursor-pointer ${
+                    className={`border border-gray-200 p-4 rounded-lg cursor-pointer ${
                       selectedAddress?._id === addr._id
                         ? "border-black bg-gray-50"
                         : ""
                     }`}
                   >
-                    <p className="font-medium">
-                      {addr.fullName} - {addr.phone}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {addr.street}, {addr.wardName}, {addr.districtName},{" "}
-                      {addr.provinceName}
-                    </p>
+                    <div className="flex justify-between items-center">
+                      <div className="information">
+                        <p className="font-medium">
+                          {addr.fullName} - {addr.phone}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {addr.street}, {addr.wardName}, {addr.districtName},{" "}
+                          {addr.provinceName}
+                        </p>
+                      </div>
 
-                    <div className="flex gap-2 mt-2">
-                      {!addr.isDefault && (
-                        <button
+           
+                        <Trash2Icon
+                        
+                        className="text-red-400 hover:text-red-500 transition cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setDefaultAddress(addr._id);
+                            deleteAddress(addr._id);
                           }}
-                          className="text-sm border px-2 py-1 rounded"
-                        >
-                          Set Default
-                        </button>
-                      )}
+                        />
+                    </div>
 
+                    {!addr.isDefault && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          deleteAddress(addr._id);
+                          setDefaultAddress(addr._id);
                         }}
-                        className="text-sm text-red-500"
+                        className="text-sm mt-2 border font-medium border-red-400 text-red-400 px-2 py-1 rounded hover:bg-red-500 hover:text-white transition"
                       >
-                        Delete
+                        Set Default
                       </button>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -372,7 +384,7 @@ export default function UserProfile() {
                         type="button"
                         onClick={() => {
                           setShowForm(false);
-                          formik.resetForm(); // 🔥 important
+                          formik.resetForm();
                         }}
                         className="border px-4 py-2 rounded hover:bg-gray-300 font-medium"
                       >
@@ -389,22 +401,6 @@ export default function UserProfile() {
                   </form>
                 </PopupModal>
               )}
-            </div>
-          )}
-
-          {/* ================= ORDERS TAB ================= */}
-          {activeTab === "orders" && (
-            <div className="bg-white p-6 rounded-xl shadow">
-              <h2 className="text-lg font-semibold mb-4">Orders</h2>
-              <p className="text-gray-500">Coming soon...</p>
-            </div>
-          )}
-
-          {/* ================= WISHLIST TAB ================= */}
-          {activeTab === "wishlist" && (
-            <div className="bg-white p-6 rounded-xl shadow">
-              <h2 className="text-lg font-semibold mb-4">Wishlist</h2>
-              <p className="text-gray-500">Coming soon...</p>
             </div>
           )}
         </div>

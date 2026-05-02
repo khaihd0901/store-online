@@ -6,8 +6,9 @@ import DetailProduct from "./DetailProduct";
 import ConfirmModal from "../../components/ConfirmDialog";
 import { useProductStore } from "../../stores/productStore";
 import { useCategoryStore } from "../../stores/categoryStore";
-import { Flame, FlameIcon } from "lucide-react";
+import { Flame, FlameIcon, Search } from "lucide-react";
 import TableSkeleton from "../../components/TableSkeleton";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export default function Product() {
   const {
@@ -29,6 +30,7 @@ export default function Product() {
   const [sortKey, setSortKey] = useState("createdAt");
   const [sort, setSort] = useState("desc");
   const [filters, setFilters] = useState({});
+  const debouncedSearch = useDebounce(search, 500);
 
   const getPageNumbers = () => {
     const total = pagination?.totalPages || 1;
@@ -96,24 +98,24 @@ export default function Product() {
       setSort("asc");
     }
   };
-const handleFilter = (key, value) => {
-  setPage(1);
-  setFilters((prev) => {
-    const newFilters = { ...prev };
+  const handleFilter = (key, value) => {
+    setPage(1);
+    setFilters((prev) => {
+      const newFilters = { ...prev };
 
-    if (value === undefined) {
-      delete newFilters[key];
-    } else {
-      newFilters[key] = value;
-    }
+      if (value === undefined) {
+        delete newFilters[key];
+      } else {
+        newFilters[key] = value;
+      }
 
-    return newFilters;
-  });
-};
+      return newFilters;
+    });
+  };
+
   useEffect(() => {
-  console.log("filters:", filters, "category:", filters.category ?? "ALL");
-}, [filters]);
-
+    handleFilter("search", debouncedSearch);
+  }, [debouncedSearch]);
   const fetchProducts = useCallback(async () => {
     const params = {
       page,
@@ -122,26 +124,40 @@ const handleFilter = (key, value) => {
       ...filters,
     };
 
-    if (search) params.search = search;
-
     await productSearch(params);
-  }, [page, limit, sortKey, sort, search, filters, productSearch]);
+  }, [page, limit, sortKey, sort, filters, productSearch]);
 
   useEffect(() => {
     categoryGetAll();
     fetchProducts();
   }, [fetchProducts]);
-  console.log(filters)
   return (
     <div className="p-6 bg-gray-50 min-h-screen rounded-xl shadow">
-      <div className="flex justify-between mb-6">
-        <h1 className="text-xl font-semibold">Product Management</h1>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="bg-[var(--color-febd69)] text-white px-4 py-2 rounded-xl"
-        >
-          + Add Product
-        </button>
+      <div className=" flex items-center justify-between mb-6">
+        <div className="">
+          <h1 className="text-xl font-semibold">Product Management</h1>
+        </div>
+
+        <div className="relative search-box w-xl">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value); // only update local state
+            }}
+            placeholder="Search anything..."
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl focus:ring-2 outline-0 focus:ring-orange-400"
+          />
+        </div>
+
+        <div className="flex justify-between">
+          <button
+            onClick={() => setShowAdd(true)}
+            className="bg-[var(--color-febd69)] text-white px-4 py-2 rounded-xl"
+          >
+            + Add Product
+          </button>
+        </div>
       </div>
 
       {isLoading ? (

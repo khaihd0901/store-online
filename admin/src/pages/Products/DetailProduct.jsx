@@ -20,7 +20,6 @@ const DetailProduct = ({ onClose, prodId }) => {
     isSuccess,
     isLoading,
     toggleHotProduct,
-    clearState,
   } = useProductStore();
   const { categoryGetAll, categories } = useCategoryStore();
   useEffect(() => {
@@ -87,7 +86,6 @@ const DetailProduct = ({ onClose, prodId }) => {
   }, [selectedCategories]);
   useEffect(() => {
     if (isSuccess) {
-      clearState();
       onClose(true);
     }
   }, [isSuccess]);

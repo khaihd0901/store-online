@@ -8,6 +8,7 @@ export const useOrderStore =create((set,get) =>({
   isLoading: false,
   isSuccess: false,
   isError: false,
+  lastQuery: {},
   pagination: {},
 
   setOrders: (data) => {
@@ -28,21 +29,38 @@ export const useOrderStore =create((set,get) =>({
       isLoading: false,
       isSuccess: false,
       isError: false,
+  lastQuery: {},
+  pagination: {},
     });
   },
-  orderGetAll: async () =>{
+  orderGetAll: async (query = {}) =>{
     try{
-        set({isLoading: true});
-        const order = await orderService.getUserOrders();
-        if(order){
-            get().setOrders(order)
+        set({isLoading: true, lastQuery: query});
+        const res = await orderService.getUserOrders(query);
+        if(res){
+            get().setOrders(res.data)
         };
-        set({isSuccess: true})
+        set({pagination: res.pagination, isLoading: false})
     }catch(err){
         console.log(err)
         set({isError: true})
     }finally{
         set({isLoading: false})
+    }
+  },
+    getOrderById: async (id) => {
+    try {
+      set({ isLoading: true });
+
+      const res = await orderService.getOrderById(id);
+console.log(res.order)
+      set({
+        order: res.order,
+        isLoading: false,
+      });
+    } catch (err) {
+      console.error(err);
+      set({ isLoading: false });
     }
   },
   updateOrderStatus: async (id, status) => {

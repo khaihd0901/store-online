@@ -6,11 +6,11 @@ export const useProductStore = create((set, get) => ({
   products: [],
   imagesData: [],
   product: null,
-  pagination: {},
   isLoading: false,
   isSuccess: false,
   isError: false,
   lastQuery: {},
+  pagination: {},
 
   setProducts: (data) => {
     set({

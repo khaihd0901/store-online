@@ -101,13 +101,6 @@ UserSchema.pre("save", async function () {
 
   this.password = await bcrypt.hash(this.password, 10);
 });
-UserSchema.path("addresses").validate(function (value) {
-  return value.length <= 3;
-}, "Max 3 addresses");
-
-UserSchema.path("addresses").validate(function (value) {
-  return value.length >= 1;
-}, "At least 1 address required");
 UserSchema.methods.createOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
 
