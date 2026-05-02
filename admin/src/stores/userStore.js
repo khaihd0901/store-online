@@ -9,6 +9,7 @@ export const useUserStore = create((set, get) => ({
   isLoading: false,
   isSuccess: false,
   isError: false,
+  results: [],
 
   setUsers: (data) => {
     set({
@@ -32,6 +33,8 @@ export const useUserStore = create((set, get) => ({
       isLoading: false,
       isSuccess: false,
       isError: false,
+  results: [],
+
     });
   },
   userGetAll: async () => {
@@ -135,6 +138,20 @@ export const useUserStore = create((set, get) => ({
       toast.success("User lock status toggled successfully!");
     } catch (error) {
       console.log(error);
+    }
+  },
+  userSearchGlobal :async (type, keyword) => {
+    if (!keyword) return set({ results: [] });
+
+    set({ loading: true });
+
+    try {
+      const data = await userService.searchAdmin(type, keyword);
+      set({ results: data });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      set({ loading: false });
     }
   },
 }));

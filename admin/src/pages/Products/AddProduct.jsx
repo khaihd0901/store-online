@@ -9,7 +9,7 @@ import { useProductStore } from "../../stores/productStore";
 import { useCategoryStore } from "../../stores/categoryStore";
 
 export default function AddProductModal({ onClose }) {
-  const { productCreate, productUploadImages, isLoading, isSuccess } =
+  const { productCreate, productUploadImages, isLoading, isSuccess, clearState } =
     useProductStore();
   const { categoryGetAll, categories } = useCategoryStore();
 
@@ -54,6 +54,7 @@ export default function AddProductModal({ onClose }) {
           images: uploaded,
         };
         productCreate(payload);
+        clearState();
       } catch (error) {
         console.log(error);
       }

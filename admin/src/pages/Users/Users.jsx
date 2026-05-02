@@ -4,10 +4,19 @@ import Table from "../../components/TableModal/Table";
 import DetailUser from "./DetailUser";
 import { useUserStore } from "../../stores/userStore";
 import ConfirmModal from "../../components/ConfirmDialog";
+import TableSkeleton from "../../components/TableSkeleton";
+import { Search } from "lucide-react";
 const Users = () => {
-  const { userGetAll, users, toggleUserLock, clearState,userDelete } = useUserStore();
+  const {
+    userGetAll,
+    users,
+    toggleUserLock,
+    clearState,
+    userDelete,
+    isLoading,
+  } = useUserStore();
   const [userId, setUserId] = useState(null);
-    const [confirmId, setConfirmId] = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
   useEffect(() => {
     userGetAll();
   }, []);
@@ -56,15 +65,31 @@ const Users = () => {
   };
   return (
     <div className="p-6 bg-gray-50 min-h-screen rounded-xl shadow">
-      <div className="flex justify-between mb-6">
-        <h1 className="text-xl font-semibold">User Management</h1>
+      <div className=" flex items-center justify-between mb-6">
+        <div className="">
+          <h1 className="text-xl font-semibold">User Management</h1>
+        </div>
+        <div className="relative search-box w-xl">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            placeholder="Search anything..."
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl focus:ring-2 outline-0 focus:ring-orange-400"
+          />
+        </div>
       </div>
 
-      <Table data={data} onView={(e) => handleView(e)} onDelete={(e) => handleDeleteClick(e)} />
+      {isLoading ? (
+        <TableSkeleton rows={users.length} cols={data.length} />
+      ) : (
+        <Table
+          data={data}
+          onDelete={(e) => handleDeleteClick(e)}
+          onView={(e) => handleView(e)}
+        />
+      )}
 
       {userId && <DetailUser userId={userId} onClose={handleCloseDetail} />}
 
-      
       {confirmId && (
         <ConfirmModal
           open={true}

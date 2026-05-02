@@ -1,23 +1,10 @@
 @import "tailwindcss";
-@tailwind base;
-@tailwind components;
 @tailwind utilities;
 
 @layer base {
 button{
   cursor: pointer;
 }
-  body {
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-  }
-
 }
 
 @layer components {
@@ -656,7 +643,7 @@ button{
     padding: 10px 40px;
   }
 
-  .search-form input[type="search"].search-field::focus {
+  .search-form input[type="search"].search-field:focus {
     border-color: #af9aaa;
   }
 

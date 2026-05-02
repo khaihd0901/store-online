@@ -42,7 +42,7 @@ export default function Table({
     );
 
   return (
-    <div className="bg-white overflow-clip">
+    <div className="bg-white overflow-visible">
       <table className="w-full text-sm">
         <thead className="bg-gray-200">
           <tr>
@@ -74,10 +74,14 @@ export default function Table({
                 {col.key === "category" && onFilter && (
                   <select
                     onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => onFilter("category", e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+
+                      onFilter("category", value === "" ? undefined : value);
+                    }}
                     className="mt-1 w-fit px-2 py-1 border rounded text-xs mx-auto block"
                   >
-                    <option value="">Category</option>
+                    <option value="">All Categories</option> {/* ✅ THIS */}
                     {categories.map((category) => (
                       <option key={category._id} value={category._id}>
                         {category.categoryName}
@@ -92,7 +96,6 @@ export default function Table({
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => {
                       const value = e.target.value;
-
                       onFilter(
                         "isHot",
                         value === "" ? undefined : value === "true",
@@ -101,8 +104,8 @@ export default function Table({
                     className="mt-1 w-fit px-2 py-1 border rounded text-xs mx-auto block"
                   >
                     <option value="">Hot Status</option>
+                    <option value="false">Normal</option>
                     <option value="true">Hot</option>
-                    <option value="false">Not Hot</option>
                   </select>
                 )}
               </th>
@@ -133,7 +136,7 @@ export default function Table({
 
                 {onRestore ? (
                   <button
-                    onClick={() => onRestore(d)}
+                    onClick={() => onDelete(d)}
                     className="bg-green-500 text-white px-2 py-1 rounded-xl"
                   >
                     Restore

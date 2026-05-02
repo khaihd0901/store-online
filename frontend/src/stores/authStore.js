@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { toast } from "sonner";
 import authService from "@/services/authService";
+import { useUserStore } from "./userStore";
 
 export const useAuthStore = create(
   persist(
@@ -12,6 +13,9 @@ export const useAuthStore = create(
       isSuccess: false,
       isError: false,
       message: "",
+        isLoginOpen: false,
+  openLogin: () => set({ isLoginOpen: true }),
+  closeLogin: () => set({ isLoginOpen: false }),
 
       setAccessToken: (token) => {
         set({ accessToken: token });
@@ -32,7 +36,7 @@ export const useAuthStore = create(
         try {
           set({ isLoading: true, isError: false });
           await authService.authSignUp(data);
-          set({isLoading: false });
+          set({ isLoading: false });
           toast.success("Sign Up Success!");
         } catch (err) {
           console.log(err);
@@ -50,6 +54,8 @@ export const useAuthStore = create(
           if (user) {
             get().setAccessToken(user.accessToken);
             await get().authMe();
+            await useUserStore.getState().userMergeCart();
+            await useUserStore.getState().userGetCart();
           }
 
           toast.success("Sign In Success!");
@@ -84,7 +90,6 @@ export const useAuthStore = create(
           set({ isLoading: false });
         }
       },
-
       authRefreshToken: async () => {
         try {
           const accessToken = await authService.authRefreshToken();
@@ -117,7 +122,6 @@ export const useAuthStore = create(
             isSuccess: true,
             message: res?.message || "Email verified successfully",
           });
-
         } catch (err) {
           const errorMsg =
             err.response?.data?.message || "Invalid or expired token";

@@ -15,7 +15,7 @@ const ProductSection = ({ title }) => {
   useEffect(() => {
     productGetBestSelling();
   }, []);
-
+  console.log("Dữ liệu bestSellingProducts đang là:", bestSellingProducts);
   return (
     <section className="relative py-16 bg-white border-b border-gray-100">
       <div className="container mx-auto px-4 relative">
@@ -43,10 +43,11 @@ const ProductSection = ({ title }) => {
             </div>
           ) : (
             <Swiper
-              modules={[Navigation, Autoplay]}
+              loop={Array.isArray(bestSellingProducts) && bestSellingProducts.length > 5}
               spaceBetween={30}
               slidesPerView={1}
-              loop={bestSellingProducts.length > 5} 
+              // Đã thêm dấu ? ở đây
+              loop={bestSellingProducts?.length > 5} 
               navigation={{
                 nextEl: '.custom-next-btn',
                 prevEl: '.custom-prev-btn',
@@ -59,26 +60,32 @@ const ProductSection = ({ title }) => {
               }}
               className="py-4"
             >
-              {bestSellingProducts.map((product) => (
+              {/* Đã thêm dấu ? ở đây */}
+              {Array.isArray(bestSellingProducts) && bestSellingProducts.map((product) => (
                 <SwiperSlide key={product._id}>
-                  <ProductCard 
+                  <ProductCard
+                    key={product._id}
                     id={product._id}
+                    image={product.images && product.images.length > 0 ? product.images[0].url : "/images/placeholder.png"}
                     title={product.title}
                     author={product.author}
                     price={product.price}
-                    image={product.images && product.images.length > 0 ? product.images[0].url : "/images/placeholder.png"}
+                    // Truyền ID chuẩn xác vào các hàm trong store
                     onClickWishlist={() => userAddToWishlist(product._id)}
-                    onClickAddCart={() =>
-                      userAddToCart({
-                        cart: [
-                          {
-                            prodId: product._id,
-                            quantity: 1,
-                            price: product.price,
-                          },
-                        ],
-                      })
-                    }
+                    onClickAddCart={async () => {
+                      const productData = {
+                        prodId: product._id,
+                        title: product.title,
+                        author: product.author,
+                        price: product.price,
+                        stock: product.stock,
+                        images:
+                          product.images && product.images.length > 0
+                            ? product.images
+                            : [{ url: product.images[0].url}],
+                      };
+                      await userAddToCart(productData);
+                    }}
                   />
                 </SwiperSlide>
               ))}

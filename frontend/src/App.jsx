@@ -3,7 +3,7 @@ import Layout from "./components/Layout/Layout.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import { Toaster } from "sonner";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import Profile from "./pages/Profile.jsx";
+import Profile from "./pages/UserProfile.jsx";
 import Order from "./pages/Order.jsx";
 import ShopPage from "./pages/ShopPage.jsx";
 import WishList from "./pages/WishList.jsx";
@@ -16,6 +16,7 @@ import Contact from "./pages/Contact.jsx";
 import { useUserStore } from "./stores/userStore.js";
 import { useEffect } from "react";
 import { useAuthStore } from "./stores/authStore.js";
+import Checkout from "./pages/Checkout.jsx";
 function App() {
   const userGetCart = useUserStore((state) => state.userGetCart);
   const userGetWishlist = useUserStore((state) => state.userGetWishlist);
@@ -26,6 +27,7 @@ function App() {
       userGetCart();
     }
   }, []);
+  
   return (
     <BrowserRouter>
       <Toaster richColors />
@@ -39,6 +41,8 @@ function App() {
 
           <Route path="/product/:id" element={<ProductPage />} />
           <Route path="/verify-email/:token" element={<VerifyEmail />} />
+          
+            <Route path="/cart" element={<Cart />} />
           {/* <Route path="/products" element={<OurShop />} />
           <Route path="/products/:id" element={<ProductDetail />} /> */}
 
@@ -46,8 +50,8 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/profile" element={<Profile />} />
             <Route path="/orders" element={<Order />} />
-            <Route path="/cart" element={<Cart />} />
             <Route path="/wish-list" element={<WishList />} />
+            <Route path="/checkout" element={<Checkout />} />
             {/* <Route path="/cart" element={<ShoppingCart />} />
           <Route path="/wish-list" element={<WishList />} />
           <Route path="/check-out" element={<CheckOut />} />

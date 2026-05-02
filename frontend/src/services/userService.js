@@ -1,5 +1,13 @@
 import api from "@/middlewares/axios"
 
+const userGetUserById = async (id) =>{
+    const res = await api.get(`user/${id}`)
+    return res.data
+}
+const userUpdate = async (id,data) =>{
+    const res = await api.put(`user/update/${id}`,data);
+    return res.data
+}
 const userForgotPasswordOTP = async (email) =>{
     const res = await api.post(`user/forgot-password`, email)
     return res.data
@@ -26,7 +34,13 @@ const userRemoveFromWishlist = async (productId) =>{
     const res = await api.put(`user/remove-wishlist`, { prodId: productId })
     return res.data
 }
+const userMergeCart = async (cartData) =>{
+    console.log(cartData)
+    const res = await api.post(`user/merge-cart`,cartData);
+    return res.data
+}
 const userAddToCart = async (cartData) =>{
+    console.log(cartData)
     const res = await api.post(`user/cart`, cartData)
     return res.data
 }
@@ -59,8 +73,9 @@ const userGetOrders = async (params = {}) =>{
     const res = await api.get('user/get-order', { params })
     return res.data
 }
-
 const userService = {
+    userUpdate,
+    userGetUserById,
     userForgotPasswordOTP,
     userVerifyOTP,
     userResetPassword,
@@ -71,6 +86,7 @@ const userService = {
     userGetCart,
     userRemoveItemFromCart,
     userUpdateQuantity,
+    userMergeCart,
     userApplyCoupon,
     userRemoveCoupon,
     userCreateOrder,

@@ -48,46 +48,113 @@ export const getProducts = asyncHandler(async (req, res) => {
 // ============================
 export const searchProducts = asyncHandler(async (req, res) => {
   const queryObj = { ...req.query };
-  const excludeFields = ["page", "sort", "limit", "fields", "search"];
+  console.log(queryObj)
+  const excludeFields = ["page", "sort", "limit", "fields", "search", "minPrice", "maxPrice", "category"];
   excludeFields.forEach((el) => delete queryObj[el]);
 
   let queryStr = JSON.stringify(queryObj);
   queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
   let filterQuery = JSON.parse(queryStr);
 
-  // ✅ remove empty values
+  // remove empty values
   Object.keys(filterQuery).forEach((key) => {
     if (filterQuery[key] === "" || filterQuery[key] == null) {
       delete filterQuery[key];
     }
   });
 
-  // ✅ convert boolean
-if (filterQuery.hot !== undefined) {
-  if (filterQuery.hot === "true") filterQuery.hot = true;
-  if (filterQuery.hot === "false") filterQuery.hot = false;
-}
+  // convert boolean
+  if (filterQuery.hot !== undefined) {
+    if (filterQuery.hot === "true") filterQuery.hot = true;
+    if (filterQuery.hot === "false") filterQuery.hot = false;
+  }
+  
   let mongoQuery = { ...filterQuery };
-  // ✅ safe search
+
+  // ✅ LOGIC LỌC GIÁ
+  if (req.query.minPrice || req.query.maxPrice) {
+    mongoQuery.price = {};
+    if (req.query.minPrice) mongoQuery.price.$gte = Number(req.query.minPrice);
+    if (req.query.maxPrice) mongoQuery.price.$lte = Number(req.query.maxPrice);
+  }
+
+  // ✅ SAFE SEARCH
   if (req.query.search && req.query.search.trim() !== "") {
     mongoQuery.$or = [
       { title: { $regex: req.query.search.trim(), $options: "i" } },
     ];
   }
-  console.log("FINAL QUERY:", mongoQuery);
+
+  // ==========================================
+  // ✅ LOGIC MỚI: TÌM ĐÚNG VÀO CỘT categoryName
+  // ==========================================
+  // if (req.query.category) {
+  //   const categoryNames = req.query.category.split(",");
+  //   // Tìm các Category không phân biệt hoa thường
+  //   const regexCategories = categoryNames.map(name => new RegExp(`^${name.trim()}$`, 'i'));
+    
+  //   // ✅ ĐÃ SỬA THÀNH categoryName CHUẨN VỚI MONGODB CỦA BẠN
+  //   const categories = await Category.find({
+  //     categoryName: { $in: regexCategories } 
+  //   });
+
+  //   if (categories.length > 0) {
+  //     const categoryIds = categories.map((cat) => cat._id);
+  //     mongoQuery.category = { $in: categoryIds }; // Truyền ID chuẩn của MongoDB
+  //   } else {
+  //     mongoQuery.category = null; // Cố tình truyền null nếu không tìm thấy để trả về 0 kết quả
+  //   }
+  // }
+
+if (req.query.category) {
+  const values = req.query.category.split(",");
+
+  const objectIds = [];
+  const names = [];
+
+  values.forEach((val) => {
+    const trimmed = val.trim();
+
+    // check nếu là ObjectId hợp lệ
+    if (mongoose.Types.ObjectId.isValid(trimmed)) {
+      objectIds.push(new mongoose.Types.ObjectId(trimmed));
+    } else {
+      names.push(trimmed);
+    }
+  });
+
+  let categoryIds = [...objectIds];
+
+  // nếu có name thì query thêm
+  if (names.length > 0) {
+    const regexCategories = names.map(
+      (name) => new RegExp(`^${name}$`, "i")
+    );
+
+    const categories = await Category.find({
+      categoryName: { $in: regexCategories },
+    });
+
+    const idsFromName = categories.map((cat) => cat._id);
+    categoryIds = [...categoryIds, ...idsFromName];
+  }
+
+  if (categoryIds.length > 0) {
+    mongoQuery.category = { $in: categoryIds };
+  } else {
+    mongoQuery.category = null;
+  }
+}
+  console.log("FINAL QUERY ĐƯỢC GỬI VÀO MONGO:", mongoQuery);
 
   let query = Product.find(mongoQuery).populate("category");
-  // ✅ add sorting
-if (req.query.sort) {
-  const sortBy = req.query.sort.split(",").join(" ");
-  query = query.sort(sortBy);
-}
-if (req.query.category) {
-  const category = req.query.category.split(",");
-
-  mongoQuery.category = { $in: category };
-}
-
+  
+  // add sorting
+  if (req.query.sort) {
+    const sortBy = req.query.sort.split(",").join(" ");
+    query = query.sort(sortBy);
+  }
+  
   // pagination
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 20;
@@ -108,6 +175,7 @@ if (req.query.category) {
     },
   });
 });
+
 // ============================
 // GET PRODUCT BY ID
 // ============================
@@ -154,26 +222,26 @@ export const updateProduct = asyncHandler(async (req, res) => {
   }
 
   // ---------- CATEGORY VALIDATION ----------
-if (updateData.category) {
-  if (updateData.category.length === 0) {
-    res.status(400);
-    throw new Error("Product must have at least 1 category");
-  }
+  if (updateData.category) {
+    if (updateData.category.length === 0) {
+      res.status(400);
+      throw new Error("Product must have at least 1 category");
+    }
 
-  if (updateData.category.length > 3) {
-    res.status(400);
-    throw new Error("Maximum 3 category allowed");
-  }
+    if (updateData.category.length > 3) {
+      res.status(400);
+      throw new Error("Maximum 3 category allowed");
+    }
 
-  const count = await Category.countDocuments({
-    _id: { $in: updateData.category },
-  });
+    const count = await Category.countDocuments({
+      _id: { $in: updateData.category },
+    });
 
-  if (count !== updateData.category.length) {
-    res.status(400);
-    throw new Error("Invalid category");
+    if (count !== updateData.category.length) {
+      res.status(400);
+      throw new Error("Invalid category");
+    }
   }
-}
 
   // ---------- UPDATE ----------
   Object.assign(product, updateData);
@@ -184,6 +252,7 @@ if (updateData.category) {
 
   res.status(200).json(saved);
 });
+
 // ============================
 // DELETE PRODUCT
 // ============================
@@ -205,6 +274,7 @@ export const deleteProduct = asyncHandler(async (req, res) => {
 
   res.status(200).json({ message: "Product deleted successfully" });
 });
+
 // ============================
 // Get best selling products (for homepage)
 // ============================
@@ -215,6 +285,7 @@ export const getBestSellingProducts = asyncHandler(async (req, res) => {
     .populate("category");
   res.status(200).json(products);
 });
+
 // ============================
 // TOGGLE HOT PRODUCT
 // ============================
@@ -231,6 +302,7 @@ export const toggleHotProduct = asyncHandler(async (req, res) => {
 
   res.status(200).json(product);
 });
+
 // ============================
 // UPLOAD PRODUCT IMAGES
 // ============================

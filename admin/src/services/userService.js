@@ -28,6 +28,10 @@ const toggleUserLock = async (userId) => {
     const res =await api.put(`/user/toggle-lock/${userId}`);
     return res.data
 }
+ const searchAdmin = async (type, keyword) => {
+  const res = await api.get(`user/search/${type}?q=${keyword}`);
+  return res.data;
+};
 const userService = {
     getUsers,
     toggleUserLock,
@@ -35,7 +39,8 @@ const userService = {
     updateUser,
     deleteUser,
     restoreUser,
-    getDeletedUsers
+    getDeletedUsers,
+    searchAdmin
 }
 
 export default userService

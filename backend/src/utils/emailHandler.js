@@ -110,16 +110,56 @@ export const sendResetPasswordOTP = async (email, OTP) => {
 };
 
 // Send order confirmation email
-export const sendOrderConfirmation = async (email, orderId, orderDetails) => {
+export const sendOrderConfirmation = async (email, order) => {
   try {
+    const itemsHtml = order.items
+      .map(
+        (item) => `
+        <tr>
+          <td>${item.prodId.title || "Product"}</td>
+          <td>${item.quantity}</td>
+          <td>$${item.price}</td>
+        </tr>
+      `
+      )
+      .join("");
+
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: `"My Store" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: `Order Confirmation #${orderId}`,
-      html: `<h1>Order Confirmed</h1><p>Order ID: ${orderId}</p><p>${orderDetails}</p>`,
+      subject: `Order Confirmation #${order.orderCode}`,
+      html: `
+        <div style="font-family: Arial; max-width:600px; margin:auto">
+          <h2>🎉 Order Confirmed</h2>
+
+          <p><strong>Order Code:</strong> ${order.orderCode}</p>
+          <p><strong>Status:</strong> ${order.status}</p>
+
+          <h3>Items:</h3>
+          <table border="1" cellpadding="8" cellspacing="0" width="100%">
+            <tr>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Price</th>
+            </tr>
+            ${itemsHtml}
+          </table>
+
+          <h3>Total: $${order.totalAmount}</h3>
+
+          <p><strong>Shipping Address:</strong></p>
+          <p>
+            ${order.shippingAddress.street}, 
+            ${order.shippingAddress.ward}, 
+            ${order.shippingAddress.district}, 
+            ${order.shippingAddress.province}
+          </p>
+
+          <p>Thank you for shopping with us ❤️</p>
+        </div>
+      `,
     });
   } catch (error) {
     console.error("Error sending email:", error);
-    throw error;
   }
 };
