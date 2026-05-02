@@ -48,7 +48,7 @@ export const getProducts = asyncHandler(async (req, res) => {
 // ============================
 export const searchProducts = asyncHandler(async (req, res) => {
   const queryObj = { ...req.query };
-  
+  console.log(queryObj)
   const excludeFields = ["page", "sort", "limit", "fields", "search", "minPrice", "maxPrice", "category"];
   excludeFields.forEach((el) => delete queryObj[el]);
 
@@ -88,25 +88,63 @@ export const searchProducts = asyncHandler(async (req, res) => {
   // ==========================================
   // ✅ LOGIC MỚI: TÌM ĐÚNG VÀO CỘT categoryName
   // ==========================================
-  if (req.query.category) {
-    const categoryNames = req.query.category.split(",");
+  // if (req.query.category) {
+  //   const categoryNames = req.query.category.split(",");
+  //   // Tìm các Category không phân biệt hoa thường
+  //   const regexCategories = categoryNames.map(name => new RegExp(`^${name.trim()}$`, 'i'));
     
-    // Tìm các Category không phân biệt hoa thường
-    const regexCategories = categoryNames.map(name => new RegExp(`^${name.trim()}$`, 'i'));
-    
-    // ✅ ĐÃ SỬA THÀNH categoryName CHUẨN VỚI MONGODB CỦA BẠN
+  //   // ✅ ĐÃ SỬA THÀNH categoryName CHUẨN VỚI MONGODB CỦA BẠN
+  //   const categories = await Category.find({
+  //     categoryName: { $in: regexCategories } 
+  //   });
+
+  //   if (categories.length > 0) {
+  //     const categoryIds = categories.map((cat) => cat._id);
+  //     mongoQuery.category = { $in: categoryIds }; // Truyền ID chuẩn của MongoDB
+  //   } else {
+  //     mongoQuery.category = null; // Cố tình truyền null nếu không tìm thấy để trả về 0 kết quả
+  //   }
+  // }
+
+if (req.query.category) {
+  const values = req.query.category.split(",");
+
+  const objectIds = [];
+  const names = [];
+
+  values.forEach((val) => {
+    const trimmed = val.trim();
+
+    // check nếu là ObjectId hợp lệ
+    if (mongoose.Types.ObjectId.isValid(trimmed)) {
+      objectIds.push(new mongoose.Types.ObjectId(trimmed));
+    } else {
+      names.push(trimmed);
+    }
+  });
+
+  let categoryIds = [...objectIds];
+
+  // nếu có name thì query thêm
+  if (names.length > 0) {
+    const regexCategories = names.map(
+      (name) => new RegExp(`^${name}$`, "i")
+    );
+
     const categories = await Category.find({
-      categoryName: { $in: regexCategories } 
+      categoryName: { $in: regexCategories },
     });
 
-    if (categories.length > 0) {
-      const categoryIds = categories.map((cat) => cat._id);
-      mongoQuery.category = { $in: categoryIds }; // Truyền ID chuẩn của MongoDB
-    } else {
-      mongoQuery.category = null; // Cố tình truyền null nếu không tìm thấy để trả về 0 kết quả
-    }
+    const idsFromName = categories.map((cat) => cat._id);
+    categoryIds = [...categoryIds, ...idsFromName];
   }
 
+  if (categoryIds.length > 0) {
+    mongoQuery.category = { $in: categoryIds };
+  } else {
+    mongoQuery.category = null;
+  }
+}
   console.log("FINAL QUERY ĐƯỢC GỬI VÀO MONGO:", mongoQuery);
 
   let query = Product.find(mongoQuery).populate("category");

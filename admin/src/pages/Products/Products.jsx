@@ -96,23 +96,24 @@ export default function Product() {
       setSort("asc");
     }
   };
-  
-  const handleFilter = (key, value) => {
-    setPage(1);
+const handleFilter = (key, value) => {
+  setPage(1);
+  setFilters((prev) => {
+    const newFilters = { ...prev };
 
-    setFilters((prev) => {
-      const newFilters = { ...prev };
+    if (value === undefined) {
+      delete newFilters[key];
+    } else {
+      newFilters[key] = value;
+    }
 
-      // ❗ remove filter when empty
-      if (!value) {
-        delete newFilters[key];
-      } else {
-        newFilters[key] = value;
-      }
+    return newFilters;
+  });
+};
+  useEffect(() => {
+  console.log("filters:", filters, "category:", filters.category ?? "ALL");
+}, [filters]);
 
-      return newFilters;
-    });
-  };
   const fetchProducts = useCallback(async () => {
     const params = {
       page,
