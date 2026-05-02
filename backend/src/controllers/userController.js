@@ -942,39 +942,159 @@ export const getOrderbyUser = asyncHandler(async (req, res) => {
 // GET ALL ORDERS
 // ============================
 export const getAllOrders = asyncHandler(async (req, res) => {
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
+  const {
+    page = 1,
+    limit = 10,
+    search,
+    status,
+    minTotal,
+    maxTotal,
+    fromDate,
+    toDate,
+    sort,
+  } = req.query;
+
   const skip = (page - 1) * limit;
 
-  const status = req.query.status;
+  // ==========================================
+  // MATCH STAGE (base filters)
+  // ==========================================
+  const match = {};
 
-  const filter = {};
-
-  if (status) {
-    filter.status = status;
+  // STATUS
+  if (status && status !== "ALL") {
+    match.status = { $in: status.split(",") };
   }
 
-  const [orders, total] = await Promise.all([
-    Order.find(filter)
-      .populate("orderBy")
-      .populate("items.prodId")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit),
+  // TOTAL
+  if (minTotal || maxTotal) {
+    match.totalAmount = {};
+    if (minTotal) match.totalAmount.$gte = Number(minTotal);
+    if (maxTotal) match.totalAmount.$lte = Number(maxTotal);
+  }
 
-    Order.countDocuments(filter),
-  ]);
+  // DATE
+  if (fromDate || toDate) {
+    match.createdAt = {};
+    if (fromDate) match.createdAt.$gte = new Date(fromDate);
+    if (toDate) match.createdAt.$lte = new Date(toDate);
+  }
+
+  // ==========================================
+  // AGGREGATION PIPELINE
+  // ==========================================
+  const pipeline = [
+    { $match: match },
+
+    // JOIN USER
+    {
+      $lookup: {
+        from: "users", // collection name in MongoDB
+        localField: "orderBy",
+        foreignField: "_id",
+        as: "orderBy",
+      },
+    },
+    { $unwind: "$orderBy" },
+
+    // SEARCH
+    ...(search && search.trim()
+      ? [
+          {
+            $match: {
+              $or: [
+                {
+                  orderCode: {
+                    $regex: search.trim(),
+                    $options: "i",
+                  },
+                },
+                {
+                  "orderBy.fullName": {
+                    $regex: search.trim(),
+                    $options: "i",
+                  },
+                },
+                {
+                  "orderBy.email": {
+                    $regex: search.trim(),
+                    $options: "i",
+                  },
+                },
+              ],
+            },
+          },
+        ]
+      : []),
+
+    // SORT
+    {
+      $sort: sort
+        ? Object.fromEntries(
+            sort
+              .split(",")
+              .map((s) => [s.replace("-", ""), s.startsWith("-") ? -1 : 1]),
+          )
+        : { createdAt: -1 },
+    },
+
+    // PAGINATION
+    { $skip: Number(skip) },
+    { $limit: Number(limit) },
+  ];
+
+  // ==========================================
+  // EXECUTE
+  // ==========================================
+  const orders = await Order.aggregate(pipeline);
+
+  // COUNT (same filter but without skip/limit)
+  const countPipeline = [
+    { $match: match },
+    {
+      $lookup: {
+        from: "users",
+        localField: "orderBy",
+        foreignField: "_id",
+        as: "orderBy",
+      },
+    },
+    { $unwind: "$orderBy" },
+
+    ...(search && search.trim()
+      ? [
+          {
+            $match: {
+              $or: [
+                { orderCode: { $regex: search.trim(), $options: "i" } },
+                {
+                  "orderBy.fullName": {
+                    $regex: search.trim(),
+                    $options: "i",
+                  },
+                },
+              ],
+            },
+          },
+        ]
+      : []),
+
+    { $count: "total" },
+  ];
+
+  const countResult = await Order.aggregate(countPipeline);
+  const total = countResult[0]?.total || 0;
 
   res.status(200).json({
     data: orders,
     pagination: {
       total,
-      page,
+      page: Number(page),
+      limit: Number(limit),
       totalPages: Math.ceil(total / limit),
     },
   });
 });
-
 // ============================
 // UPDATE ORDER STATUS
 // ============================
@@ -1010,6 +1130,25 @@ export const changeOrderStatus = asyncHandler(async (req, res) => {
   });
 });
 
+// ============================
+// GET ORDER BY ID
+// ============================
+export const getOrderById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const order = await Order.findById(id).populate("orderBy").populate("items.prodId");
+
+  if (!order) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+
+  res.status(200).json({
+    success: true,
+    order,
+  });
+});
+
+
 
 export const adminSearch = async (req, res) => {
   try {
@@ -1021,10 +1160,7 @@ export const adminSearch = async (req, res) => {
 
     const [products, orders, categories, users] = await Promise.all([
       Product.find({
-        $or: [
-          { title: regex },
-          { author: regex },
-        ],
+        $or: [{ title: regex }, { author: regex }],
       })
         .select("title price images")
         .limit(5),
@@ -1037,16 +1173,12 @@ export const adminSearch = async (req, res) => {
 
       Category.find({
         categoryName: regex,
-      })
-        .limit(5),
+      }).limit(5),
 
       User.find({
-        $or: [
-          { email: regex },
-          { fullName: regex },
-        ],
+        $or: [{ email: regex }, { fullName: regex }],
       })
-        .select("email name")
+        .select("email fullName")
         .limit(5),
     ]);
 
